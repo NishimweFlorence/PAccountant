@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "TcBU8l2AhYA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Florence\\source\\repos\\PAccountant\\PAccountant.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Florence\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.2\\microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "XsBI0mMQ1f0=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\HP\\source\\repos\\PAccoutant\\PAccoutant.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\HP\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.2\\microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

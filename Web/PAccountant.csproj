@@ -1,8 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+<<<<<<< HEAD
   <AssemblyName>PAccountant</AssemblyName>
    <RootNamespace>PAccountant</RootNamespace>
+=======
+    <AssemblyName>PAccountant</AssemblyName>
+    <RootNamespace>PAccountant</RootNamespace>
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

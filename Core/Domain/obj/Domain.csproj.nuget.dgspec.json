@@ -1,6 +1,7 @@
 {
   "format": 1,
   "restore": {
+<<<<<<< HEAD
     "C:\\Users\\HP\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj": {}
   },
   "projects": {
@@ -20,15 +21,35 @@
           "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+=======
+    "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj",
+        "projectName": "Domain",
+        "projectPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj",
+        "packagesPath": "C:\\Users\\ingab\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\ingab\\AppData\\Roaming\\NuGet\\NuGet.Config"
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+<<<<<<< HEAD
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {},
           "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10/nuget/v3/index.json": {}
+=======
+          "https://api.nuget.org/v3/index.json": {}
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
         },
         "frameworks": {
           "net10.0": {
@@ -63,15 +84,19 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
+<<<<<<< HEAD
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
             },
+=======
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
+<<<<<<< HEAD
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
             "Microsoft.AspNetCore.App": "(,10.0.32767]",
@@ -209,6 +234,9 @@
             "Microsoft.Extensions.WebEncoders": "(,10.0.32767]",
             "Microsoft.JSInterop": "(,10.0.32767]",
             "Microsoft.Net.Http.Headers": "(,10.0.32767]",
+=======
+            "Microsoft.CSharp": "(,4.7.32767]",
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
             "Microsoft.VisualBasic": "(,10.4.32767]",
             "Microsoft.Win32.Primitives": "(,4.3.32767]",
             "Microsoft.Win32.Registry": "(,5.0.32767]",
@@ -368,7 +396,10 @@
             "System.Diagnostics.Contracts": "(,4.3.32767]",
             "System.Diagnostics.Debug": "(,4.3.32767]",
             "System.Diagnostics.DiagnosticSource": "(,10.0.32767]",
+<<<<<<< HEAD
             "System.Diagnostics.EventLog": "(,10.0.32767]",
+=======
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
             "System.Diagnostics.FileVersionInfo": "(,4.3.32767]",
             "System.Diagnostics.Process": "(,4.3.32767]",
             "System.Diagnostics.StackTrace": "(,4.3.32767]",
@@ -379,7 +410,10 @@
             "System.Drawing.Primitives": "(,4.3.32767]",
             "System.Dynamic.Runtime": "(,4.3.32767]",
             "System.Formats.Asn1": "(,10.0.32767]",
+<<<<<<< HEAD
             "System.Formats.Cbor": "(,10.0.32767]",
+=======
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
             "System.Formats.Tar": "(,10.0.32767]",
             "System.Globalization": "(,4.3.32767]",
             "System.Globalization.Calendars": "(,4.3.32767]",
@@ -455,7 +489,10 @@
             "System.Security.Cryptography.OpenSsl": "(,5.0.32767]",
             "System.Security.Cryptography.Primitives": "(,4.3.32767]",
             "System.Security.Cryptography.X509Certificates": "(,4.3.32767]",
+<<<<<<< HEAD
             "System.Security.Cryptography.Xml": "(,10.0.32767]",
+=======
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
             "System.Security.Principal": "(,4.3.32767]",
             "System.Security.Principal.Windows": "(,5.0.32767]",
             "System.Security.SecureString": "(,4.3.32767]",
@@ -469,7 +506,10 @@
             "System.Threading.AccessControl": "(,10.0.32767]",
             "System.Threading.Channels": "(,10.0.32767]",
             "System.Threading.Overlapped": "(,4.3.32767]",
+<<<<<<< HEAD
             "System.Threading.RateLimiting": "(,10.0.32767]",
+=======
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
             "System.Threading.Tasks": "(,4.3.32767]",
             "System.Threading.Tasks.Dataflow": "(,10.0.32767]",
             "System.Threading.Tasks.Extensions": "(,5.0.32767]",

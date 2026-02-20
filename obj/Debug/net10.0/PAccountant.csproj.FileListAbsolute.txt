@@ -1,0 +1,9 @@
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\EmbeddedAttribute.cs
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\ValidatableTypeAttribute.cs
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\PAccountant.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\PAccountant.AssemblyInfoInputs.cache
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\PAccountant.AssemblyInfo.cs
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\PAccountant.csproj.CoreCompileInputs.cache
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\PAccountant.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\ingab\source\repos\PAccountant\obj\Debug\net10.0\PAccountant.sourcelink.json

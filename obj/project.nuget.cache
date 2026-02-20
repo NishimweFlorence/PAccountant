@@ -1,10 +1,18 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "dgSpecHash": "qsL7U49ryC0=",
   "success": true,
   "projectFilePath": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HP\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.2\\microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512"
+=======
+  "dgSpecHash": "4bBVrsF1tQg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\PAccountant.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ingab\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.2\\microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512"
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
   ],
   "logs": []
 }

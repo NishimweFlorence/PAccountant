@@ -45,34 +45,54 @@
     ]
   },
   "packageFolders": {
+<<<<<<< HEAD
     "C:\\Users\\HP\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+=======
+    "C:\\Users\\ingab\\.nuget\\packages\\": {}
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
   },
   "project": {
     "version": "1.0.0",
     "restore": {
+<<<<<<< HEAD
       "projectUniqueName": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
       "projectName": "PAccoutant",
       "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\obj\\",
+=======
+      "projectUniqueName": "C:\\Users\\ingab\\source\\repos\\PAccountant\\PAccountant.csproj",
+      "projectName": "PAccountant",
+      "projectPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\PAccountant.csproj",
+      "packagesPath": "C:\\Users\\ingab\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\obj\\",
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
+<<<<<<< HEAD
         "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+=======
+        "C:\\Users\\ingab\\AppData\\Roaming\\NuGet\\NuGet.Config"
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
+<<<<<<< HEAD
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {},
         "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10/nuget/v3/index.json": {}
+=======
+        "https://api.nuget.org/v3/index.json": {}
+>>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
       },
       "frameworks": {
         "net10.0": {

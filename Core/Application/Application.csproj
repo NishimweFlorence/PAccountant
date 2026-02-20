@@ -1,21 +1,10 @@
-<<<<<<< HEAD
-<Project Sdk="Microsoft.NET.Sdk.Web">
-=======
 <Project Sdk="Microsoft.NET.Sdk">
->>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-<<<<<<< HEAD
-    <OutputType>Library</OutputType>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Core\Domain\Domain.csproj" />
-=======
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
->>>>>>> 9fa7d194ebc0e2a04992404ecaaa8adfaa15869f
   </ItemGroup>
 </Project>

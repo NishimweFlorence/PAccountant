@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj": {}
+    "C:\\Users\\HP\\source\\repos\\PAccountant\\Web\\PAccountant.csproj": {}
   },
   "projects": {
-    "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj": {
+    "C:\\Users\\HP\\source\\repos\\PAccountant\\Web\\PAccountant.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
-        "projectName": "PAccoutant",
-        "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
+        "projectUniqueName": "C:\\Users\\HP\\source\\repos\\PAccountant\\Web\\PAccountant.csproj",
+        "projectName": "PAccountant",
+        "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Web\\PAccountant.csproj",
         "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\obj\\",
+        "outputPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Web\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

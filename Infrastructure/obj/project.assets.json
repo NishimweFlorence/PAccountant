@@ -2,46 +2,53 @@
   "version": 3,
   "targets": {
     "net10.0": {
-      "Microsoft.AspNetCore.App.Internal.Assets/10.0.2": {
-        "type": "package",
-        "build": {
-          "build/Microsoft.AspNetCore.App.Internal.Assets.props": {},
-          "buildTransitive/Microsoft.AspNetCore.App.Internal.Assets.targets": {}
+      "Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Domain": "1.0.0"
         },
-        "buildMultiTargeting": {
-          "buildMultiTargeting/Microsoft.AspNetCore.App.Internal.Assets.targets": {}
-        }
+        "compile": {
+          "bin/placeholder/Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Application.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Domain.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
   "libraries": {
-    "Microsoft.AspNetCore.App.Internal.Assets/10.0.2": {
-      "sha512": "fMAqrUm+aspxRAsCJ6Hlgs96XSHwNIr9HBNt7wyBAzQkPlfE7w+0C4NzDoJnso5YZyDI0VcRtEXxG9odt3KiZA==",
-      "type": "package",
-      "path": "microsoft.aspnetcore.app.internal.assets/10.0.2",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "THIRD-PARTY-NOTICES.TXT",
-        "_framework/blazor.server.js",
-        "_framework/blazor.server.js.map",
-        "_framework/blazor.web.js",
-        "_framework/blazor.web.js.map",
-        "_framework/blazor.webassembly.js",
-        "_framework/blazor.webassembly.js.map",
-        "build/Microsoft.AspNetCore.App.Internal.Assets.props",
-        "build/Microsoft.AspNetCore.App.Internal.Assets.targets",
-        "buildMultiTargeting/Microsoft.AspNetCore.App.Internal.Assets.targets",
-        "buildTransitive/Microsoft.AspNetCore.App.Internal.Assets.targets",
-        "microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512",
-        "microsoft.aspnetcore.app.internal.assets.nuspec"
-      ]
+    "Application/1.0.0": {
+      "type": "project",
+      "path": "../Core/Application/Application.csproj",
+      "msbuildProject": "../Core/Application/Application.csproj"
+    },
+    "Domain/1.0.0": {
+      "type": "project",
+      "path": "../Core/Domain/Domain.csproj",
+      "msbuildProject": "../Core/Domain/Domain.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "Microsoft.AspNetCore.App.Internal.Assets >= 10.0.2"
+      "Application >= 1.0.0",
+      "Domain >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -51,11 +58,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
-      "projectName": "PAccoutant",
-      "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
+      "projectUniqueName": "C:\\Users\\HP\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj",
+      "projectName": "Infrastructure",
+      "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\obj\\",
+      "outputPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -77,7 +84,14 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\HP\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj": {
+              "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj"
+            },
+            "C:\\Users\\HP\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj": {
+              "projectPath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -95,14 +109,6 @@
     "frameworks": {
       "net10.0": {
         "targetAlias": "net10.0",
-        "dependencies": {
-          "Microsoft.AspNetCore.App.Internal.Assets": {
-            "suppressParent": "All",
-            "target": "Package",
-            "version": "[10.0.2, )",
-            "autoReferenced": true
-          }
-        },
         "imports": [
           "net461",
           "net462",

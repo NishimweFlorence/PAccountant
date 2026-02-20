@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qsL7U49ryC0=",
+  "dgSpecHash": "bJXC9TUXBI8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\HP\\source\\repos\\PAccountant\\PAccoutant.csproj",
+  "projectFilePath": "C:\\Users\\HP\\source\\repos\\PAccountant\\Web\\PAccountant.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HP\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.2\\microsoft.aspnetcore.app.internal.assets.10.0.2.nupkg.sha512"
   ],

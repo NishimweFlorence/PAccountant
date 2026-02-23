@@ -1,0 +1,72 @@
+@page "/accounts/edit/{id:int}"
+@rendermode InteractiveServer
+
+@using Application.DTO
+@using System.ComponentModel.DataAnnotations
+@using Domain.Entities
+@using Application.Interfaces
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+
+@inject NavigationManager Navigation
+@inject IAccountService AccountService
+<PageTitle>Edit Account</PageTitle>
+
+<h3>Edit Account</h3>
+
+<div class="container">
+      <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Edit Account</h3>
+            <a href="/accounts" class="btn btn-outline-secondary btn-sm">Back to List</a>
+    </div>
+
+       <div class="card">
+                    <div class="card-body">
+                      <EditForm Model="Model" OnValidSubmit="onValidSubmit" FormName="EditAccountForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger py-2 mb-3" />
+
+                        <MudStack Spacing="2">
+                            <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" />
+                            <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" />
+                            <MudTextField Label="balance" @bind-Value="Model.balance" For="@(() => Model.balance)" />
+                            <MudTextField Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">Update Account</MudButton>
+                        </MudStack>
+                       </EditForm>
+                        </div>
+        </div>
+    </div>
+</div>
+</div>
+@code{
+    [Parameter]
+    public int Id { get; set; }
+
+    private AccountUpdateDTO Model {get;set;} = new ();
+
+    private bool loaded;
+
+    protected override void OnParametersSet()
+    {
+        var account = AccountService.GetAccountById(Id);
+        if (account != null)
+        {
+            Model = new AccountUpdateDTO
+            {
+                Name = account.Name ?? "",
+                Type = account.Type ?? "",
+                balance = account.balance ?? "",
+                Status = account.Status ?? ""
+            };
+        }
+        loaded = true;
+    }
+    private void onValidSubmit()
+    {
+        if (Model == null) return;
+        AccountService.UpdateAccount(Id, Model);
+        Navigation.NavigateTo("/accounts");
+    }
+}

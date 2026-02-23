@@ -1,0 +1,81 @@
+@using Domain.Entities
+@using Application.Interfaces
+
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+
+@inject IDialogService DialogService
+
+@page "/Accounts"
+
+<PageTitle>Accounts</PageTitle>
+
+<MudPaper Class="pa-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Accounts</h3>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>OpenDialog())">Add Account</MudButton>
+    </div>
+
+    <MudTable Items="accounts" Dense="true" Hover="true" Class="mt-4">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>balance</MudTh>
+            <MudTh>Currency</MudTh>
+             <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd DataLabel="Balance">@context.balance</MudTd>
+            <MudTd DataLabel="Currency">@context.Currency</MudTd>
+            <MudTd DataLabel="Status">@context.Status</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Primary" OnClick="@(()=>Navigation.NavigateTo($"/accounts/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@(()=>Navigation.NavigateTo($"/accounts/edit/{context.Id}"))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    List<Domain.Entities.Account> accounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            accounts = AccountService.GetAllAccounts();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading accounts: {ex.Message}");
+        }
+    }
+
+
+    private async Task OpenDialog(Account? account = null)
+    {
+        var dialog = await DialogService.ShowAsync<AccountDialog>("Add Account");
+        var result = await dialog.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+            try
+            {
+                accounts = AccountService.GetAllAccounts();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reloading accounts: {ex.Message}");
+            }
+        }
+    }
+}
+
+
+

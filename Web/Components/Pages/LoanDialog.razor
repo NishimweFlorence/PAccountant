@@ -1,0 +1,141 @@
+@using Application.DTO
+@using Application.Services.Loans
+@using Application.Services.Accounts
+@using Application.Interfaces
+@using Domain.Entities
+@using MudBlazor
+
+@inject ILoanService LoanService
+@inject IAccountService AccountService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(IsEdit ? "Edit Loan" : "Add New Loan")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int" Label="Account" @bind-Value="Model.AccountId" For="@(() => Model.AccountId)" Required="true">
+                        @foreach (var account in accounts)
+                        {
+                            <MudSelectItem Value="@account.Id">@account.Name (@account.balance @account.Currency)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Borrower" @bind-Value="Model.Borrower" For="@(() => Model.Borrower)" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField Label="Amount" Value="Model.Amount" ValueChanged="@((decimal v) => OnAmountChanged(v))" For="@(() => Model.Amount)" Format="N2" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField Label="Interest Rate (%)" Value="Model.InterestRate" ValueChanged="@((decimal v) => OnRateChanged(v))" For="@(() => Model.InterestRate)" Format="N2" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField Label="Amount to Pay" @bind-Value="Model.AmountToPay" For="@(() => Model.AmountToPay)" Format="N2" ReadOnly="true" HelperText="Automatically calculated" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Loan Date" @bind-Date="Model.LoanDate" For="@(() => Model.LoanDate)" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)">
+                        <MudSelectItem Value="@("Active")">Active</MudSelectItem>
+                        <MudSelectItem Value="@("Paid")">Paid</MudSelectItem>
+                        <MudSelectItem Value="@("Overdue")">Overdue</MudSelectItem>
+                        <MudSelectItem Value="@("Cancelled")">Cancelled</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Description" @bind-Value="Model.Description" For="@(() => Model.Description)" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public LoanCreateDTO Model { get; set; } = new() { LoanDate = DateTime.Today, Status = "Active" };
+    [Parameter] public bool IsEdit { get; set; } = false;
+
+    private List<Account> accounts = new();
+
+    protected override void OnInitialized()
+    {
+        accounts = AccountService.GetAllAccounts();
+    }
+
+    private void Submit()
+    {
+        OnValidSubmit();
+    }
+
+    private void OnAmountChanged(decimal value)
+    {
+        Model.Amount = value;
+        CalculateTotal();
+    }
+
+    private void OnRateChanged(decimal value)
+    {
+        Model.InterestRate = value;
+        CalculateTotal();
+    }
+
+    private void CalculateTotal()
+    {
+        Model.AmountToPay = Model.Amount + (Model.Amount * Model.InterestRate / 100);
+        StateHasChanged();
+    }
+
+    private async void OnValidSubmit()
+    {
+        try
+        {
+            CalculateTotal(); // Ensure calculation is fresh
+            if (IsEdit)
+            {
+                var updateDto = new LoanUpdateDTO
+                {
+                    Id = Model.Id,
+                    AccountId = Model.AccountId,
+                    Borrower = Model.Borrower,
+                    Amount = Model.Amount,
+                    InterestRate = Model.InterestRate,
+                    AmountToPay = Model.AmountToPay,
+                    Currency = Model.Currency,
+                    LoanDate = Model.LoanDate,
+                    Description = Model.Description,
+                    Status = Model.Status
+                };
+                await LoanService.UpdateLoanAsync(updateDto);
+                Snackbar.Add("Loan updated successfully", Severity.Success);
+            }
+            else
+            {
+                await LoanService.CreateLoanAsync(Model);
+                Snackbar.Add("Loan created successfully", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving loan: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

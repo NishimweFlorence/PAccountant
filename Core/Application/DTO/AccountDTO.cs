@@ -5,7 +5,7 @@ namespace Application.DTO
        
         public string? Name { get; set; }
         public string? Type { get; set; }
-        public string? balance {get;set;}
+        public decimal balance {get;set;}
         public string? Currency {get;set;}
         public string? Status {get;set;}
     }
@@ -14,7 +14,7 @@ namespace Application.DTO
     {
         public string? Name { get; set; }
         public string? Type { get; set; }
-        public string? balance {get;set;}
+        public decimal balance {get;set;}
         public string? Status {get;set;}
         
     }

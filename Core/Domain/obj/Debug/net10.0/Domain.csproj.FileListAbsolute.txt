@@ -22,3 +22,15 @@ C:\Users\ingab\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.dll
 C:\Users\ingab\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\refint\Domain.dll
 C:\Users\ingab\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.pdb
 C:\Users\ingab\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\ref\Domain.dll
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\bin\Debug\net10.0\Domain.deps.json
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\bin\Debug\net10.0\Domain.dll
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\bin\Debug\net10.0\Domain.pdb
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.AssemblyInfoInputs.cache
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.AssemblyInfo.cs
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.csproj.CoreCompileInputs.cache
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.sourcelink.json
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.dll
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\refint\Domain.dll
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\Domain.pdb
+c:\Users\Achil\source\repos\PAccountant\Core\Domain\obj\Debug\net10.0\ref\Domain.dll

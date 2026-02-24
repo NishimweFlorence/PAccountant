@@ -1,0 +1,142 @@
+@page "/loan-repayments"
+@using MudBlazor
+@using Application.DTO
+@using Application.Services.Loans
+@using Application.Services.LoanRepayments
+@inject ILoanRepaymentService LoanRepaymentService
+@inject ILoanService LoanService
+@inject MudBlazor.IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Loan Repayments</MudText>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddDialog">Add Repayment</MudButton>
+        </div>
+
+        <MudTable Items="@Repayments" Dense="true" Hover="true" Bordered="true" Striped="true" Filter="new Func<LoanRepaymentCreateDTO,bool>(FilterFunc1)" @bind-SelectedItem="selectedItem1">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Loan / Borrower</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh>Note</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Loan / Borrower">@GetLoanInfo(context.LoanId)</MudTd>
+                <MudTd DataLabel="Amount">@context.Amount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Date">@context.RepaymentDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Note">@context.Note</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Info" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteRepayment(context))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<LoanRepaymentCreateDTO> Repayments = new();
+    private List<LoanCreateDTO> Loans = new();
+    private string searchString1 = "";
+    private LoanRepaymentCreateDTO? selectedItem1 = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Repayments = await LoanRepaymentService.GetAllLoanRepaymentsAsync();
+        Loans = await LoanService.GetAllLoansAsync();
+    }
+
+    private string GetLoanInfo(int loanId)
+    {
+        var loan = Loans.FirstOrDefault(l => l.Id == loanId);
+        return loan != null ? $"{loan.Borrower} (#{loan.Id})" : $"Loan #{loanId}";
+    }
+
+    private bool FilterFunc1(LoanRepaymentCreateDTO element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(LoanRepaymentCreateDTO element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (GetLoanInfo(element.LoanId).Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Note?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
+            return true;
+        if (element.Amount.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<LoanRepaymentDialog>("Add New Repayment", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(LoanRepaymentCreateDTO item)
+    {
+        var parameters = new DialogParameters<LoanRepaymentDialog>
+        {
+            { x => x.IsEdit, true },
+            { x => x.Model, new LoanRepaymentUpdateDTO
+                {
+                    Id = item.Id,
+                    LoanId = item.LoanId,
+                    Amount = item.Amount,
+                    RepaymentDate = item.RepaymentDate,
+                    Note = item.Note
+                }
+            }
+        };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<LoanRepaymentDialog>("Edit Repayment", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteRepayment(LoanRepaymentCreateDTO item)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this repayment?");
+
+        if (confirmed)
+        {
+            try
+            {
+                await LoanRepaymentService.DeleteLoanRepaymentAsync(new LoanRepaymentDeleteDTO { Id = item.Id });
+                Snackbar.Add("Repayment deleted successfully", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

@@ -10,6 +10,7 @@ namespace Infrastructure.Data
         {
         }
         public DbSet<Account> Accounts { get; set; }
+        public DbSet<TransactionCategory> TransactionCategories { get; set; }
 
         
     }

@@ -52,6 +52,25 @@ namespace Infrastructure.Migrations
 
                     b.ToTable("Accounts");
                 });
+
+            modelBuilder.Entity("Domain.Entities.TransactionCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TransactionCategories");
+                });
 #pragma warning restore 612, 618
         }
     }

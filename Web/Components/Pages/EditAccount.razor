@@ -1,4 +1,4 @@
-@page "/accounts/edit/{id:int}"
+@page "/accounts/edit/{Id:int}"
 @rendermode InteractiveServer
 
 @using Application.DTO
@@ -46,8 +46,6 @@
 
     private AccountUpdateDTO Model {get;set;} = new ();
 
-    private bool loaded;
-
     protected override void OnParametersSet()
     {
         var account = AccountService.GetAccountById(Id);
@@ -61,7 +59,6 @@
                 Status = account.Status ?? ""
             };
         }
-        loaded = true;
     }
     private void onValidSubmit()
     {

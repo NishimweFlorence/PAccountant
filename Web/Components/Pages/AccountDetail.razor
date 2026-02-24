@@ -46,13 +46,12 @@
 @code
 {
     [Parameter]
+    public int Id { get; set; }
 
-    public int id { get; set; }
-
-    public Account account;
+    public Account? account;
 
     protected override void OnInitialized()
     {
-        account = AccountService.GetAccountById(id);
+        account = AccountService.GetAccountById(Id);
     }
 }

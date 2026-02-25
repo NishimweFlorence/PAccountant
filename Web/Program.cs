@@ -7,6 +7,7 @@ using Application.Services.Accounts;
 using Application.Services.TransactionCategories;
 using Infrastructure.Repositories;
 using Infrastructure.DependencyInjection;
+using Application.Services.Assets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,7 @@ builder.Services.AddMudServices();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITransactionCategoryService, TransactionCategoryService>();
+builder.Services.AddScoped<IAssetService, AssetService>();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 

@@ -1,0 +1,85 @@
+@using Domain.Entities
+@using Application.Interfaces
+@rendermode InteractiveServer
+
+@inject IAssetService AssetService
+@inject NavigationManager Navigation
+
+@inject IDialogService DialogService
+
+@page "/Assets"
+
+<PageTitle>Assets</PageTitle>
+
+<MudPaper Class="pa-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Assets</h3>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>OpenDialog())">Add Asset</MudButton>
+    </div>
+
+    <MudTable Items="assets" Dense="true" Hover="true" Class="mt-4">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Category</MudTh>
+            <MudTh>Current Value</MudTh>
+            <MudTh>Currency</MudTh>
+             <MudTh>Purchase Date</MudTh>
+              <MudTh>Created At</MudTh>
+            <MudTh>Actions</MudTh>
+            <MudTh>Purchase Value </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Category">@context.Category</MudTd>
+            <MudTd DataLabel="Balance">@context.CurrentValue</MudTd>
+            <MudTd DataLabel="Currency">@context.Currency</MudTd>
+            <MudTd DataLabel="Purchase Date">@context.PurchaseDate</MudTd>
+            <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
+             <MudTd DataLabel="Purchase Value">@context.PurchaseValue</MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Primary" OnClick="@(()=>Navigation.NavigateTo($"/assets/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@(()=>Navigation.NavigateTo($"/assets/edit/{context.Id}"))" />
+           
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    List<Domain.Entities.Asset> assets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            assets = AssetService.GetAllAssets();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading assets: {ex.Message}");
+        }
+    }
+
+
+    private async Task OpenDialog(Account? account = null)
+    {
+        var dialog = await DialogService.ShowAsync<AssetDialog>("Add Asset");
+        var result = await dialog.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+            try
+            {
+                assets = AssetService.GetAllAssets();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reloading assets: {ex.Message}");
+            }
+        }
+    }
+}
+
+
+

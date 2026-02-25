@@ -19,6 +19,7 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IAccount, AccountRepository>();
             services.AddScoped<Application.Interfaces.ITransactionCategory, TransactionCategoryRepository>();  
+            services.AddScoped<IAsset, AssetRepository>();
         }
     }
 }

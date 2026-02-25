@@ -3415,38 +3415,40 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ingab\\.nuget\\packages\\": {}
+    "C:\\Users\\Florence\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ingab\\source\\repos\\PAccountant\\web\\PAccountant.csproj",
+      "projectUniqueName": "C:\\Users\\Florence\\source\\repos\\PAccountant\\Web\\PAccountant.csproj",
       "projectName": "PAccountant",
-      "projectPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\web\\PAccountant.csproj",
-      "packagesPath": "C:\\Users\\ingab\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\web\\obj\\",
+      "projectPath": "C:\\Users\\Florence\\source\\repos\\PAccountant\\Web\\PAccountant.csproj",
+      "packagesPath": "C:\\Users\\Florence\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Florence\\source\\repos\\PAccountant\\Web\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\ingab\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Florence\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj": {
-              "projectPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj"
+            "C:\\Users\\Florence\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj": {
+              "projectPath": "C:\\Users\\Florence\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj"
             },
-            "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj": {
-              "projectPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj"
+            "C:\\Users\\Florence\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj": {
+              "projectPath": "C:\\Users\\Florence\\source\\repos\\PAccountant\\Core\\Domain\\Domain.csproj"
             },
-            "C:\\Users\\ingab\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj": {
-              "projectPath": "C:\\Users\\ingab\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj"
+            "C:\\Users\\Florence\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\Florence\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj"
             }
           }
         }

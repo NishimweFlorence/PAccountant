@@ -1,0 +1,623 @@
+@page "/"
+@using Application.Interfaces
+@using Application.DTO
+@using Domain.Entities
+@rendermode InteractiveServer
+
+@inject ILiabilityService LiabilityService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Dashboard — PAccountant</PageTitle>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@@400;700;900&family=DM+Sans:wght@@300;400;500&display=swap');
+
+    .dash-root {
+        font-family: 'DM Sans', sans-serif;
+        background: #0d0d0f;
+        min-height: 100vh;
+        padding: 2rem 2.5rem;
+        color: #e8e4dc;
+    }
+
+    .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+    }
+
+    .dash-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.6rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .dash-title span { color: #d4af37; }
+
+    .dash-subtitle {
+        font-size: 0.82rem;
+        color: #6b6860;
+        margin-top: 0.35rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .dash-date {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #6b6860;
+    }
+
+    .dash-date strong {
+        display: block;
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        color: #d4af37;
+        font-weight: 700;
+    }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: #16161a;
+        border: 1px solid #222228;
+        border-radius: 16px;
+        padding: 1.5rem 1.6rem;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.3s, transform 0.3s;
+        animation: fadeUp 0.5s ease both;
+    }
+
+    .kpi-card:hover {
+        border-color: rgba(212,175,55,0.35);
+        transform: translateY(-3px);
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .kpi-card.gold::before  { background: linear-gradient(90deg, #d4af37, #f5d87a); }
+    .kpi-card.red::before   { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+    .kpi-card.amber::before { background: linear-gradient(90deg, #e67e22, #f39c12); }
+    .kpi-card.teal::before  { background: linear-gradient(90deg, #16a085, #1abc9c); }
+
+    .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.12s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.19s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.26s; }
+
+    .kpi-icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .kpi-icon.gold  { background: rgba(212,175,55,0.12); color: #d4af37; }
+    .kpi-icon.red   { background: rgba(192,57,43,0.12);  color: #e74c3c; }
+    .kpi-icon.amber { background: rgba(230,126,34,0.12); color: #f39c12; }
+    .kpi-icon.teal  { background: rgba(22,160,133,0.12); color: #1abc9c; }
+
+    .kpi-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #6b6860;
+        margin-bottom: 0.3rem;
+    }
+
+    .kpi-value {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .kpi-delta {
+        font-size: 0.75rem;
+        color: #6b6860;
+        margin-top: 0.4rem;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 1.4rem;
+        margin-bottom: 1.4rem;
+    }
+
+    @@media (max-width: 900px) {
+        .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+        background: #16161a;
+        border: 1px solid #222228;
+        border-radius: 16px;
+        overflow: hidden;
+        animation: fadeUp 0.5s ease 0.3s both;
+    }
+
+    .panel-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid #222228;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .panel-body {
+        max-height: 370px;
+        overflow-y: auto;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-track { background: #16161a; }
+    .panel-body::-webkit-scrollbar-thumb { background: #2a2a32; border-radius: 4px; }
+
+    .l-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.9rem 1.5rem;
+        border-bottom: 1px solid #1c1c22;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+    .l-row:last-child { border-bottom: none; }
+    .l-row:hover { background: rgba(212,175,55,0.04); }
+
+    .l-name { font-weight: 500; font-size: 0.9rem; color: #e8e4dc; }
+    .l-type  { font-size: 0.72rem; color: #6b6860; margin-top: 2px; }
+
+    .l-amount {
+        font-family: 'Playfair Display', serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        text-align: right;
+    }
+
+    .l-currency {
+        font-size: 0.65rem;
+        color: #d4af37;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        display: block;
+        text-align: right;
+    }
+
+    .l-badge {
+        font-size: 0.68rem;
+        padding: 3px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .l-badge.overdue  { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); }
+    .l-badge.upcoming { background: rgba(212,175,55,0.1);  color: #d4af37; border: 1px solid rgba(212,175,55,0.2); }
+    .l-badge.ok       { background: rgba(22,160,133,0.1);  color: #1abc9c; border: 1px solid rgba(22,160,133,0.2); }
+
+    .progress-panel {
+        background: #16161a;
+        border: 1px solid #222228;
+        border-radius: 16px;
+        padding: 1.5rem;
+        animation: fadeUp 0.5s ease 0.38s both;
+    }
+
+    .progress-item { margin-bottom: 1.4rem; }
+    .progress-item:last-child { margin-bottom: 0; }
+
+    .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-name { font-size: 0.82rem; color: #c8c4bc; font-weight: 500; }
+
+    .progress-pct {
+        font-family: 'Playfair Display', serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #d4af37;
+    }
+
+    .progress-bar-bg {
+        height: 6px;
+        background: #222228;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .actions-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        animation: fadeUp 0.5s ease 0.45s both;
+    }
+
+    .action-btn {
+        background: #16161a;
+        border: 1px solid #222228;
+        border-radius: 14px;
+        padding: 1.1rem 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        cursor: pointer;
+        transition: all 0.25s;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-btn:hover {
+        border-color: rgba(212,175,55,0.4);
+        background: rgba(212,175,55,0.04);
+        transform: translateY(-2px);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .action-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .action-label { font-size: 0.82rem; font-weight: 500; color: #c8c4bc; line-height: 1.2; }
+    .action-sub   { font-size: 0.7rem; color: #6b6860; margin-top: 1px; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #6b6860; }
+
+    .shimmer {
+        background: linear-gradient(90deg, #16161a 25%, #222228 50%, #16161a 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+        height: 16px;
+        margin-bottom: 0.7rem;
+    }
+
+    .alert-banner {
+        background: rgba(192,57,43,0.1);
+        border: 1px solid rgba(192,57,43,0.25);
+        border-radius: 12px;
+        padding: 0.9rem 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-text { font-size: 0.83rem; color: #e8a09a; }
+    .alert-text strong { color: #e74c3c; }
+
+    .section-label {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #222228;
+    }
+
+    @@keyframes shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="dash-root">
+
+    <div class="dash-header">
+        <div>
+            <h1 class="dash-title">P<span>Account</span>ant</h1>
+            <div class="dash-subtitle">Personal Finance Dashboard</div>
+        </div>
+        <div class="dash-date">
+            <strong>@DateTime.Now.ToString("dd MMM yyyy")</strong>
+            @DateTime.Now.ToString("dddd")
+        </div>
+    </div>
+
+    @if (!IsLoading && OverdueCount > 0)
+    {
+        <div class="alert-banner">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color:#e74c3c; font-size:1.2rem;" />
+            <div class="alert-text">
+                You have <strong>@OverdueCount overdue @(OverdueCount == 1 ? "liability" : "liabilities")</strong>
+                totalling <strong>@OverdueTotal.ToString("N2")</strong>. Review them immediately.
+            </div>
+        </div>
+    }
+
+    <div class="kpi-grid">
+        <div class="kpi-card gold">
+            <div class="kpi-icon gold">
+                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Style="font-size:1.3rem;" />
+            </div>
+            <div class="kpi-label">Total Liabilities</div>
+            <div class="kpi-value">@(IsLoading ? "—" : Liabilities.Count.ToString())</div>
+            <div class="kpi-delta">Active obligations tracked</div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-icon red">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Style="font-size:1.3rem;" />
+            </div>
+            <div class="kpi-label">Original Debt</div>
+            <div class="kpi-value">@(IsLoading ? "—" : TotalOriginal.ToString("N0"))</div>
+            <div class="kpi-delta">Sum of all original amounts</div>
+        </div>
+        <div class="kpi-card amber">
+            <div class="kpi-icon amber">
+                <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Style="font-size:1.3rem;" />
+            </div>
+            <div class="kpi-label">Current Balance</div>
+            <div class="kpi-value">@(IsLoading ? "—" : TotalCurrent.ToString("N0"))</div>
+            <div class="kpi-delta">Still owed across all debts</div>
+        </div>
+        <div class="kpi-card teal">
+            <div class="kpi-icon teal">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Style="font-size:1.3rem;" />
+            </div>
+            <div class="kpi-label">Total Paid Off</div>
+            <div class="kpi-value">@(IsLoading ? "—" : TotalPaidOff.ToString("N0"))</div>
+            <div class="kpi-delta">@OverallPayoffPct% of total cleared</div>
+        </div>
+    </div>
+
+    <div class="main-grid">
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">All Liabilities</div>
+                <a href="/liabilities/create" style="font-size:0.78rem; color:#d4af37; text-decoration:none; display:flex; align-items:center; gap:4px;">
+                    <MudIcon Icon="@Icons.Material.Filled.Add" Style="font-size:1rem;" /> New
+                </a>
+            </div>
+            <div class="panel-body">
+                @if (IsLoading)
+                {
+                    <div style="padding:1.5rem;">
+                        <div class="shimmer" style="width:80%"></div>
+                        <div class="shimmer" style="width:65%"></div>
+                        <div class="shimmer" style="width:75%"></div>
+                        <div class="shimmer" style="width:55%"></div>
+                        <div class="shimmer" style="width:70%"></div>
+                    </div>
+                }
+                else if (!Liabilities.Any())
+                {
+                    <div class="empty-state">
+                        <div style="font-size:2rem; margin-bottom:0.6rem; opacity:0.3;">📋</div>
+                        <div style="font-size:0.85rem;">No liabilities recorded yet.</div>
+                        <a href="/liabilities/create" style="color:#d4af37; font-size:0.8rem;">Add your first one →</a>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var l in Liabilities.OrderBy(x => x.DueDate))
+                    {
+                        var daysLeft   = (l.DueDate - DateTime.Today).Days;
+                        var badgeClass = daysLeft < 0 ? "overdue" : daysLeft <= 30 ? "upcoming" : "ok";
+                        var badgeText  = daysLeft < 0 ? $"{Math.Abs(daysLeft)}d overdue"
+                                       : daysLeft == 0 ? "Due today"
+                                       : $"{daysLeft}d left";
+
+                        <div class="l-row" @onclick="@(() => NavigationManager.NavigateTo("/liabilities"))">
+                            <div>
+                                <div class="l-name">@l.LenderName</div>
+                                <div class="l-type">@l.Type</div>
+                            </div>
+                            <div>
+                                <span class="l-currency">@l.Currency</span>
+                                <span class="l-amount">@l.CurrentAmount.ToString("N0")</span>
+                            </div>
+                            <div class="l-badge @badgeClass">@badgeText</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="progress-panel">
+            <div class="panel-title" style="margin-bottom:1.2rem;">Payoff Progress</div>
+            @if (IsLoading)
+            {
+                <div class="progress-item">
+                    <div class="shimmer" style="width:60%; height:14px;"></div>
+                    <div class="shimmer" style="width:100%; height:6px;"></div>
+                </div>
+                <div class="progress-item">
+                    <div class="shimmer" style="width:50%; height:14px;"></div>
+                    <div class="shimmer" style="width:100%; height:6px;"></div>
+                </div>
+                <div class="progress-item">
+                    <div class="shimmer" style="width:70%; height:14px;"></div>
+                    <div class="shimmer" style="width:100%; height:6px;"></div>
+                </div>
+            }
+            else if (!Liabilities.Any())
+            {
+                <div class="empty-state" style="padding:2rem 0;">
+                    <div style="font-size:0.82rem;">No data to display.</div>
+                </div>
+            }
+            else
+            {
+                @foreach (var l in Liabilities.Where(x => x.OriginalAmount > 0).OrderByDescending(x => x.OriginalAmount).Take(6))
+                {
+                    var pct      = (int)Math.Clamp((l.OriginalAmount - l.CurrentAmount) / l.OriginalAmount * 100, 0, 100);
+                    var barColor = pct >= 75 ? "#1abc9c" : pct >= 40 ? "#d4af37" : "#e74c3c";
+
+                    <div class="progress-item">
+                        <div class="progress-meta">
+                            <span class="progress-name">@l.LenderName <span style="font-size:0.7rem; color:#6b6860;">(@l.Currency)</span></span>
+                            <span class="progress-pct">@pct%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width:@(pct)%; background:@barColor;"></div>
+                        </div>
+                    </div>
+                }
+
+                <div style="margin-top:1.5rem; padding-top:1.2rem; border-top:1px solid #222228;">
+                    <div class="progress-meta">
+                        <span class="progress-name" style="color:#d4af37;">Overall Progress</span>
+                        <span class="progress-pct">@OverallPayoffPct%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill"
+                             style="width:@(OverallPayoffPct)%; background:linear-gradient(90deg,#d4af37,#f5d87a);"></div>
+                    </div>
+                </div>
+            }
+        </div>
+
+    </div>
+
+    <div class="section-label">Quick Actions</div>
+    <div class="actions-row">
+        <a href="/liabilities/create" class="action-btn">
+            <div class="action-icon" style="background:rgba(212,175,55,0.12); color:#d4af37;">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Style="font-size:1.2rem;" />
+            </div>
+            <div>
+                <div class="action-label">New Liability</div>
+                <div class="action-sub">Record a new debt</div>
+            </div>
+        </a>
+        <a href="/liabilities" class="action-btn">
+            <div class="action-icon" style="background:rgba(22,160,133,0.12); color:#1abc9c;">
+                <MudIcon Icon="@Icons.Material.Filled.List" Style="font-size:1.2rem;" />
+            </div>
+            <div>
+                <div class="action-label">View All</div>
+                <div class="action-sub">Manage liabilities</div>
+            </div>
+        </a>
+        <div class="action-btn" @onclick="RefreshData">
+            <div class="action-icon" style="background:rgba(52,152,219,0.12); color:#3498db;">
+                <MudIcon Icon="@Icons.Material.Filled.Refresh" Style="font-size:1.2rem;" />
+            </div>
+            <div>
+                <div class="action-label">Refresh</div>
+                <div class="action-sub">Reload dashboard</div>
+            </div>
+        </div>
+        <div class="action-btn" style="opacity:0.45; cursor:default;">
+            <div class="action-icon" style="background:rgba(155,89,182,0.12); color:#9b59b6;">
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Style="font-size:1.2rem;" />
+            </div>
+            <div>
+                <div class="action-label">Reports</div>
+                <div class="action-sub">Coming soon</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private List<Liability> Liabilities = new();
+    private bool IsLoading = true;
+
+    private decimal TotalOriginal => Liabilities.Sum(l => l.OriginalAmount);
+    private decimal TotalCurrent  => Liabilities.Sum(l => l.CurrentAmount);
+    private decimal TotalPaidOff  => TotalOriginal - TotalCurrent;
+
+    private int OverallPayoffPct =>
+        TotalOriginal > 0
+            ? (int)Math.Clamp(TotalPaidOff / TotalOriginal * 100, 0, 100)
+            : 0;
+
+    private int     OverdueCount => Liabilities.Count(l => l.DueDate < DateTime.Today);
+    private decimal OverdueTotal => Liabilities.Where(l => l.DueDate < DateTime.Today).Sum(l => l.CurrentAmount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        try
+        {
+            await Task.Run(() =>
+            {
+                Liabilities = LiabilityService.GetAllLiabilities();
+            });
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load data: {ex.Message}", Severity.Error);
+            Console.WriteLine($"DASHBOARD ERROR: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        Snackbar.Add("Refreshing...", Severity.Info);
+        await LoadData();
+        Snackbar.Add("Dashboard updated.", Severity.Success);
+    }
+}

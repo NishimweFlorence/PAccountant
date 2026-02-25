@@ -1,23 +1,61 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+@* Required *@
+<MudThemeProvider DefaultScrollbar="true" @bind-IsDarkMode="@_isDarkMode" Theme="_theme"/>
+<MudPopoverProvider  />
+
+@* Needed for dialogs *@
+<MudDialogProvider  />
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
+<MudLayout>
+ <MudAppBar>
+<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="DrawerToggle" Edge="Edge.Start" />
+         My Application
+ <MudSpacer />
+    <MudIconButton  Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"Color="Color.Inherit"OnClick="ToggleTheme" />
+    <MudLink Href="/Register" Color="Color.Inherit" Class="ml-4">
+        <MudIcon Icon="@Icons.Material.Filled.AccountCircle" />
+    </MudLink>
+    </MudAppBar>
+         
+    <MudDrawer @bind-Open="@_drawerOpen">
         <NavMenu />
-    </div>
+    </MudDrawer>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private bool _isDarkMode;
+
+    void ToggleTheme()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = Colors.Blue.Default,
+            Secondary = Colors.Green.Accent4,
+            AppbarBackground = Colors.BlueGray.Default,
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Default
+        }
+    };
+}

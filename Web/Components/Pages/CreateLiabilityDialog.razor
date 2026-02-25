@@ -1,0 +1,261 @@
+@* @using Application.Services.Liabilities
+@using MudBlazor
+@using MudBlazor.Services
+@using Microsoft.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@using System.ComponentModel.DataAnnotations
+@using System.Runtime.CompilerServices
+
+@inject NavigationManager NavigationManager
+@inject ILiabilityService LiabilityService
+@inject ISnackbar snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.AccountBalance"
+                     Color="Color.Primary"
+                     Size="Size.Large" />
+            <div>
+                <MudText Typo="Typo.h6">Add New Liability</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Fill in the details below to record a new liability
+                </MudText>
+            </div>
+        </MudStack>
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm @ref="Form" @bind-IsValid="IsFormValid">
+            <MudGrid Spacing="3" Class="mt-1">
+
+                <!-- Type & Lender -->
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                        Basic Information
+                    </MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="Model.Type"
+                               Label="Liability Type"
+                               Variant="Variant.Outlined"
+                               Required="true"
+                               RequiredError="Please select a type"
+                               Adornment="Adornment.Start"
+                               AdornmentIcon="@Icons.Material.Filled.Category"
+                               AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@("Loan")">🏦 Loan</MudSelectItem>
+                        <MudSelectItem Value="@("Mortgage")">🏠 Mortgage</MudSelectItem>
+                        <MudSelectItem Value="@("Credit Card")">💳 Credit Card</MudSelectItem>
+                        <MudSelectItem Value="@("Overdraft")">⚠️ Overdraft</MudSelectItem>
+                        <MudSelectItem Value="@("Other")">📋 Other</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.LenderName"
+                                  Label="Lender Name"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  RequiredError="Lender name is required"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Business"
+                                  Placeholder="e.g. KCB Bank" />
+                </MudItem>
+
+                <!-- Divider -->
+                <MudItem xs="12">
+                    <MudDivider Class="mb-1" />
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Small" Class="mr-1" />
+                        Amount Details
+                    </MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="Model.OriginalAmount"
+                                     Label="Original Amount"
+                                     Variant="Variant.Outlined"
+                                     Format="F2"
+                                     Min="0"
+                                     Required="true"
+                                     RequiredError="Original amount is required"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="RWF"
+                                     HideSpinButtons="true" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="Model.CurrentAmount"
+                                     Label="Current Balance"
+                                     Variant="Variant.Outlined"
+                                     Format="F2"
+                                     Min="0"
+                                     Required="true"
+                                     RequiredError="Current balance is required"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="RWF"
+                                     HideSpinButtons="true" />
+                </MudItem>
+
+                <!-- Repayment Progress -->
+                @if (Model.OriginalAmount > 0)
+                {
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-3" Elevation="0" Style="background-color: var(--mud-palette-background-grey);">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Repayment Progress</MudText>
+                                <MudText Typo="Typo.caption" Color="@RepaymentColor">
+                                    @RepaymentPercent.ToString("F0")% paid
+                                </MudText>
+                            </MudStack>
+                            <MudProgressLinear Value="@RepaymentPercent"
+                                               Color="@RepaymentColor"
+                                               Rounded="true"
+                                               Size="Size.Medium" />
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1">
+                                <MudText Typo="Typo.caption">
+                                    Paid: RWF @((Model.OriginalAmount - Model.CurrentAmount).ToString("N0"))
+                                </MudText>
+                                <MudText Typo="Typo.caption">
+                                    Remaining: RWF @Model.CurrentAmount.ToString("N0")
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                <!-- Dates -->
+                <MudItem xs="12">
+                    <MudDivider Class="mb-1" />
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" />
+                        Date Information
+                    </MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="FormCreatedAt"
+                                   Label="Created At"
+                                   Variant="Variant.Outlined"
+                                   Required="true"
+                                   RequiredError="Created date is required"
+                                   Editable="true"
+                                   MaxDate="DateTime.Today" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="FormDueDate"
+                                   Label="Due Date"
+                                   Variant="Variant.Outlined"
+                                   Required="true"
+                                   RequiredError="Due date is required"
+                                   Editable="true" />
+                </MudItem>
+
+                <!-- Due date warning -->
+                @if (FormDueDate.HasValue && FormDueDate.Value < DateTime.Today.AddMonths(1))
+                {
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Warning" Dense="true" Icon="@Icons.Material.Filled.Warning">
+                            This liability is due within a month. Please review carefully.
+                        </MudAlert>
+                    </MudItem>
+                }
+
+                @if (FormDueDate.HasValue && FormDueDate.Value < DateTime.Today)
+                {
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Error" Dense="true" Icon="@Icons.Material.Filled.Error">
+                            This due date is in the past. This liability is overdue!
+                        </MudAlert>
+                    </MudItem>
+                }
+
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="w-100 px-4 pb-3">
+            <MudButton OnClick="Cancel"
+                       Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.Close"
+                       Disabled="IsSubmitting">
+                Cancel
+            </MudButton>
+            <MudButton OnClick="Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@(IsSubmitting || !IsFormValid)"
+                       StartIcon="@Icons.Material.Filled.Add">
+                @if (IsSubmitting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <span>Add Liability</span>
+                }
+            </MudButton>
+        </MudStack>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    // The DTO built from form input
+    private CreateLiabilityDTO Model = new();
+
+    // Date bridge fields (MudDatePicker uses DateTime?)
+    private DateTime? FormDueDate
+    {
+        get => Model.DueDate == default ? null : Model.DueDate;
+        set => Model.DueDate = value ?? DateTime.Today;
+    }
+
+    private DateTime? FormCreatedAt
+    {
+        get => Model.CreatedAt == default ? null : Model.CreatedAt;
+        set => Model.CreatedAt = value ?? DateTime.Today;
+    }
+
+    // Form state
+    private MudForm Form = null!;
+    private bool IsFormValid = false;
+    private bool IsSubmitting = false;
+
+    // Repayment progress
+    private double RepaymentPercent =>
+        Model.OriginalAmount > 0
+            ? Math.Clamp((double)((Model.OriginalAmount - Model.CurrentAmount) / Model.OriginalAmount * 100), 0, 100)
+            : 0;
+
+    private Color RepaymentColor => RepaymentPercent switch
+    {
+        >= 75 => Color.Success,
+        >= 40 => Color.Warning,
+        _ => Color.Error
+    };
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await Form.Validate();
+        if (!IsFormValid) return;
+
+        IsSubmitting = true;
+        await Task.Delay(500); // Replace with: await LiabilityService.CreateAsync(Model);
+        IsSubmitting = false;
+
+        MudDialog.Close(DialogResult.Ok(Model));
+    }
+} *@

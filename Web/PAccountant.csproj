@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <AssemblyName>PAccountant</AssemblyName>
     <RootNamespace>PAccountant</RootNamespace>

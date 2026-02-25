@@ -8,8 +8,9 @@ using Application.Services.Transactions;
 using Application.Services.Accounts;
 using Application.Services.Loans;
 using Application.Services.LoanRepayments;
-using Infrastructure.Repositories;
 using Infrastructure.DependencyInjection;
+using Application.Services.Assets;
+using Application.Services.TransactionCategories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,22 +19,20 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
-builder.Services.AddInfrastructureServices(builder.Configuration);
-
-builder.Services.AddScoped<ILiabilityService, LiabilityService>();
-builder.Services.AddScoped<ITransactionService, TransactionService>();
-
-//Database Connection
+// Database connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CRMDemoSQLConnection")));
 
-//services Implementation
+// Services implementation
+builder.Services.AddScoped<ILiabilityService, LiabilityService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<ILoanRepaymentService, LoanRepaymentService>();
+builder.Services.AddScoped<ITransactionCategoryService, TransactionCategoryService>();
+builder.Services.AddScoped<IAssetService, AssetService>();
+
 builder.Services.AddInfrastructureServices(builder.Configuration);
-
-
 
 var app = builder.Build();
 

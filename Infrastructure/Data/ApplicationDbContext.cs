@@ -9,14 +9,13 @@ namespace Infrastructure.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
+
         public DbSet<Liability> Liabilities { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
-
-
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Loan> Loans { get; set; }
         public DbSet<LoanRepayment> LoanRepayments { get; set; }
         public DbSet<TransactionCategory> TransactionCategories { get; set; }
-        
+        public DbSet<Asset> Assets { get; set; }
     }
 }

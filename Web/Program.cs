@@ -17,7 +17,7 @@ builder.Services.AddMudServices();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("PAccountantMSSQLConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CRMDemoSQLConnection")));
 
 builder.Services.AddScoped<ILiabilityService, LiabilityService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();

@@ -12,7 +12,7 @@ namespace Infrastructure.DependencyInjection
         public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("PAccountantMSSQLConnection")), ServiceLifetime.Scoped
+                options.UseSqlServer(configuration.GetConnectionString("CRMDemoSQLConnection")), ServiceLifetime.Scoped
             );
 
             services.AddScoped<ILiability, LiabilityRepository>();  

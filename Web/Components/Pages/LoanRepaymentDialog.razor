@@ -1,0 +1,86 @@
+@using MudBlazor
+@using Application.DTO
+@using Application.Services.Loans
+@using Application.Services.LoanRepayments
+@inject ILoanService LoanService
+@inject ILoanRepaymentService LoanRepaymentService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudSelect T="int" Label="Select Loan" @bind-Value="Model.LoanId" Required="true" RequiredError="Loan is required!">
+                @if (Loans != null)
+                {
+                    @foreach (var loan in Loans)
+                    {
+                        <MudSelectItem Value="@loan.Id">@loan.Borrower - @loan.Amount (@loan.Currency)</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            <MudNumericField T="decimal" Label="Amount" @bind-Value="Model.Amount" Required="true" RequiredError="Amount is required!" Min="0.01m" />
+            <MudDatePicker Label="Repayment Date" @bind-Date="Model.RepaymentDate" Required="true" RequiredError="Date is required!" />
+            <MudTextField T="string" Label="Note" @bind-Value="Model.Note" Lines="3" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(!success)" OnClick="Submit">@ButtonText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public LoanRepaymentUpdateDTO Model { get; set; } = new();
+    [Parameter] public bool IsEdit { get; set; }
+
+    private string ButtonText => IsEdit ? "Update" : "Add";
+    private bool success;
+    private MudForm form;
+    private List<LoanCreateDTO> Loans = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Loans = await LoanService.GetAllLoansAsync();
+        if (!IsEdit)
+        {
+            Model.RepaymentDate = DateTime.Today;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            try
+            {
+                if (IsEdit)
+                {
+                    await LoanRepaymentService.UpdateLoanRepaymentAsync(Model);
+                    Snackbar.Add("Repayment updated successfully", Severity.Success);
+                }
+                else
+                {
+                    var createDto = new LoanRepaymentCreateDTO
+                    {
+                        LoanId = Model.LoanId,
+                        Amount = Model.Amount,
+                        RepaymentDate = Model.RepaymentDate ?? DateTime.Now,
+                        Note = Model.Note
+                    };
+                    await LoanRepaymentService.CreateLoanRepaymentAsync(createDto);
+                    Snackbar.Add("Repayment added successfully", Severity.Success);
+                }
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

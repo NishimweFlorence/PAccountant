@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Application.Interfaces;
 using Application.Services.Liabilities;
 using Application.Services.Transactions;
+using Application.Services.Accounts;
+using Application.Services.Loans;
+using Application.Services.LoanRepayments;
 using Infrastructure.Repositories;
 using Infrastructure.DependencyInjection;
 
@@ -16,11 +19,18 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CRMDemoSQLConnection")));
 
 builder.Services.AddScoped<ILiabilityService, LiabilityService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+
+//Database Connection
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CRMDemoSQLConnection")));
+
+//services Implementation
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<ILoanService, LoanService>();
+builder.Services.AddScoped<ILoanRepaymentService, LoanRepaymentService>();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 

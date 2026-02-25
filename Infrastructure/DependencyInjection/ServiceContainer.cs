@@ -17,6 +17,8 @@ namespace Infrastructure.DependencyInjection
                 options.UseSqlServer(configuration.GetConnectionString("CRMDemoSQLConnection")), ServiceLifetime.Scoped
             );
 
+            services.AddScoped<ILiability, LiabilityRepository>();  
+            services.AddScoped<ITransaction, TransactionsRepository>();
             services.AddScoped<IAccount, AccountRepository>();
             services.AddScoped<ILoan, LoanRepository>();
             services.AddScoped<ILoanRepayment, LoanRepayRepository>();

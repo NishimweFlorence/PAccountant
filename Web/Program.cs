@@ -3,6 +3,8 @@ using MudBlazor.Services;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Application.Interfaces;
+using Application.Services.Liabilities;
+using Application.Services.Transactions;
 using Application.Services.Accounts;
 using Application.Services.Loans;
 using Application.Services.LoanRepayments;
@@ -16,6 +18,10 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
+builder.Services.AddInfrastructureServices(builder.Configuration);
+
+builder.Services.AddScoped<ILiabilityService, LiabilityService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 //Database Connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

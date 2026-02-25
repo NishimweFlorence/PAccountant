@@ -1,0 +1,551 @@
+@page "/liabilities"
+@using Application.Services.Liabilities
+@using Application.DTO
+@using Application.Interfaces
+@using Domain.Entities
+@rendermode InteractiveServer
+
+@inject ILiabilityService LiabilityService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+
+<MudText Typo="Typo.h4" Class="mb-4">Liabilities</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="6" md="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Original Amount</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Error">@TotalOriginal.ToString("N2")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Current Amount</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Warning">@TotalCurrent.ToString("N2")</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Liabilities</MudText>
+            <MudText Typo="Typo.h5">@LiabilityList.Count</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudPaper Class="pa-3 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="SearchTerm"
+                          Placeholder="Search by type or lender..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Clearable="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" md="6" Class="d-flex justify-end">
+            <MudButton Href="/liabilities/create"
+                       Variant="Variant.Filled"
+                       EndIcon="@Icons.Material.Filled.Add"
+                       Color="Color.Primary">
+                Add Liability
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudPaper Elevation="2">
+    <MudTable Items="FilteredLiabilities"
+              Dense="true"
+              Hover="true"
+              Striped="true"
+              Loading="@IsLoading"
+              LoadingProgressColor="Color.Primary">
+        <HeaderContent>
+            <MudTh>Type</MudTh>
+            <MudTh>Lender</MudTh>
+            <MudTh>Original Amount</MudTh>
+            <MudTh>Current Amount</MudTh>
+            <MudTh>Currency</MudTh>
+            <MudTh>Due Date</MudTh>
+            <MudTh>Created At</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Type">
+                <MudChip T="string" Size="Size.Small" Color="GetTypeColor(context.Type)">@context.Type</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Lender">@context.LenderName</MudTd>
+            <MudTd DataLabel="Original Amount">@context.OriginalAmount.ToString("N2")</MudTd>
+            <MudTd DataLabel="Current Amount">
+                <MudText Color="@(context.CurrentAmount > 0 ? Color.Error : Color.Success)">
+                    @context.CurrentAmount.ToString("N2")
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Currency">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                    @context.Currency
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Due Date">
+                <MudText Color="@(context.DueDate < DateTime.Now ? Color.Error : Color.Default)">
+                    @context.DueDate.ToString("dd MMM yyyy")
+                    @if (context.DueDate < DateTime.Now)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Error" Class="ml-1" />
+                    }
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Created At">@context.CreatedAt.ToString("dd MMM yyyy")</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudTooltip Text="View Details">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                   Size="Size.Small"
+                                   Color="Color.Info"
+                                   OnClick="@(() => OpenDetailsDialog(context))" />
+                </MudTooltip>
+                <MudTooltip Text="Edit">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => OpenEditDialog(context))" />
+                </MudTooltip>
+                <MudTooltip Text="Delete">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Size="Size.Small"
+                                   Color="Color.Error"
+                                   OnClick="@(() => OpenDeleteDialog(context))" />
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Class="pa-4">No liabilities found.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+
+
+<MudDialog @bind-Visible="IsDetailsDialogOpen" Options="DetailsDialogOptions">
+    <TitleContent>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Info" />
+            <MudText Typo="Typo.h6">Liability Details</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (SelectedLiability is not null)
+        {
+            var daysLeft  = (SelectedLiability.DueDate - DateTime.Today).Days;
+            var payoffPct = SelectedLiability.OriginalAmount > 0
+                ? (int)Math.Clamp(
+                    (SelectedLiability.OriginalAmount - SelectedLiability.CurrentAmount)
+                    / SelectedLiability.OriginalAmount * 100, 0, 100)
+                : 0;
+
+            <MudGrid Spacing="3">
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Liability Type</MudText>
+                        <div class="mt-1">
+                            <MudChip T="string" Size="Size.Small" Color="GetTypeColor(SelectedLiability.Type)">
+                                @SelectedLiability.Type
+                            </MudChip>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Lender / Creditor</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
+                            @SelectedLiability.LenderName
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Currency</MudText>
+                        <div class="mt-1">
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                                @SelectedLiability.Currency
+                            </MudChip>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3"
+                              Style="background:#fff3f3; border-radius:10px; border:1px solid #ffcccc;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Original Amount</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Error" Style="font-weight:700; margin-top:4px;">
+                            @SelectedLiability.Currency @SelectedLiability.OriginalAmount.ToString("N2")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3"
+                              Style="background:#fff8e1; border-radius:10px; border:1px solid #ffe082;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Current Balance</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Warning" Style="font-weight:700; margin-top:4px;">
+                            @SelectedLiability.Currency @SelectedLiability.CurrentAmount.ToString("N2")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3"
+                              Style="background:#f0fdf4; border-radius:10px; border:1px solid #bbf7d0;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Amount Paid Off</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Success" Style="font-weight:700; margin-top:4px;">
+                            @SelectedLiability.Currency @((SelectedLiability.OriginalAmount - SelectedLiability.CurrentAmount).ToString("N2"))
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Due Date</MudText>
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:4px; flex-wrap:wrap;">
+                            <MudText Typo="Typo.body1"
+                                     Color="@(daysLeft < 0 ? Color.Error : daysLeft <= 30 ? Color.Warning : Color.Default)"
+                                     Style="font-weight:600;">
+                                @SelectedLiability.DueDate.ToString("dd MMM yyyy")
+                            </MudText>
+                            @if (daysLeft < 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error">@Math.Abs(daysLeft)d overdue</MudChip>
+                            }
+                            else if (daysLeft == 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">Due today</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">@daysLeft days left</MudChip>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Created At</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
+                            @SelectedLiability.CreatedAt.ToString("dd MMM yyyy, HH:mm")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudPaper Elevation="0" Class="pa-3"
+                              Style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                            <MudText Typo="Typo.body2" Color="Color.Success">
+                                <strong>Repayment Progress</strong>
+                            </MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">
+                                @payoffPct% paid
+                            </MudChip>
+                        </div>
+                        <MudProgressLinear Value="@payoffPct"
+                                           Color="Color.Success"
+                                           Size="Size.Medium"
+                                           Rounded="true" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                            @SelectedLiability.Currency @SelectedLiability.CurrentAmount.ToString("N2") remaining
+                            of @SelectedLiability.Currency @SelectedLiability.OriginalAmount.ToString("N2") original
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => IsDetailsDialogOpen = false)"
+                   Variant="Variant.Text" Color="Color.Default">
+            Close
+        </MudButton>
+        <MudButton OnClick="@(() => { IsDetailsDialogOpen = false; OpenEditDialog(SelectedLiability!); })"
+                   Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Edit">
+            Edit
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+<MudDialog @bind-Visible="IsDialogOpen" Options="DialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" />
+            Edit Liability
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="FormType"
+                              Label="Type"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              RequiredError="Type is required" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string"
+                           Value="@FormCurrency"
+                           ValueChanged="@((string v) => FormCurrency = v)"
+                           Label="Currency"
+                           Variant="Variant.Outlined"
+                           AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                           Adornment="Adornment.Start"
+                           AdornmentColor="Color.Success">
+                    @foreach (var c in Currencies)
+                    {
+                        <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="FormOriginalAmount"
+                                 Label="Original Amount"
+                                 Variant="Variant.Outlined"
+                                 Format="F2" Min="0" Required="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="FormCurrentAmount"
+                                 Label="Current Amount"
+                                 Variant="Variant.Outlined"
+                                 Format="F2" Min="0" Required="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="FormDueDate"
+                               Label="Due Date"
+                               Variant="Variant.Outlined"
+                               Required="true" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="SubmitEditForm"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="IsSubmitting">
+            @if (IsSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Update
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+<MudDialog @bind-Visible="IsDeleteDialogOpen" Options="DeleteDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Color="Color.Error">
+            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-2" />
+            Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>
+            Are you sure you want to delete the liability from
+            <strong>@LiabilityToDelete?.LenderName</strong>?
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            This action cannot be undone.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => IsDeleteDialogOpen = false)">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="ConfirmDelete">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+
+    private List<Liability> LiabilityList = new();
+    private bool IsLoading = true;
+    private string SearchTerm = string.Empty;
+
+    private List<string> Currencies = new()
+    {
+        "USD", "EUR", "GBP", "RWF", "KES", "UGX", "TZS", "ZAR", "NGN", "GHS"
+    };
+
+    
+    private bool IsDetailsDialogOpen = false;
+    private Liability? SelectedLiability;
+
+    
+    private bool IsDialogOpen = false;
+    private bool IsSubmitting = false;
+    private Liability? LiabilityToEdit;
+    private string FormType = string.Empty;
+    private string FormCurrency = "USD";
+    private decimal FormOriginalAmount = 0;
+    private decimal FormCurrentAmount = 0;
+    private DateTime? FormDueDate = DateTime.Today;
+
+   
+    private bool IsDeleteDialogOpen = false;
+    private Liability? LiabilityToDelete;
+
+        private DialogOptions DetailsDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseOnEscapeKey = true,
+        CloseButton = true
+    };
+
+    private DialogOptions DialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    private DialogOptions DeleteDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.ExtraSmall,
+        FullWidth = true
+    };
+
+    
+    private decimal TotalOriginal => LiabilityList.Sum(l => l.OriginalAmount);
+    private decimal TotalCurrent  => LiabilityList.Sum(l => l.CurrentAmount);
+
+    private IEnumerable<Liability> FilteredLiabilities =>
+        string.IsNullOrWhiteSpace(SearchTerm)
+            ? LiabilityList
+            : LiabilityList.Where(l =>
+                l.Type.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                l.LenderName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLiabilities();
+    }
+
+    private async Task LoadLiabilities()
+    {
+        IsLoading = true;
+        try
+        {
+            LiabilityList = LiabilityService.GetAllLiabilities();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading liabilities: {ex.Message}", Severity.Error);
+            Console.WriteLine($"LOAD ERROR: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    // ── Details ───────────────────────────────────────────────────────────────
+    private void OpenDetailsDialog(Liability liability)
+    {
+        SelectedLiability   = liability;
+        IsDetailsDialogOpen = true;
+    }
+
+    // ── Edit ──────────────────────────────────────────────────────────────────
+    private void OpenEditDialog(Liability liability)
+    {
+        LiabilityToEdit    = liability;
+        FormType           = liability.Type;
+        FormCurrency       = liability.Currency;
+        FormOriginalAmount = liability.OriginalAmount;
+        FormCurrentAmount  = liability.CurrentAmount;
+        FormDueDate        = liability.DueDate;
+        IsDialogOpen       = true;
+    }
+
+    private void CloseDialog() => IsDialogOpen = false;
+
+    private async Task SubmitEditForm()
+    {
+        if (LiabilityToEdit is null) return;
+        IsSubmitting = true;
+        try
+        {
+            var dto = new UpdateLiabilityDTO
+            {
+                Type           = FormType,
+                Currency       = FormCurrency,
+                OriginalAmount = FormOriginalAmount,
+                CurrentAmount  = FormCurrentAmount,
+                DueDate        = FormDueDate ?? DateTime.Today
+            };
+            LiabilityService.UpdateLiability(LiabilityToEdit.Id, dto);
+            Snackbar.Add("Liability updated successfully!", Severity.Success);
+            IsDialogOpen = false;
+            await LoadLiabilities();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating: {ex.Message}", Severity.Error);
+            Console.WriteLine($"UPDATE ERROR: {ex}");
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    
+    private void OpenDeleteDialog(Liability liability)
+    {
+        LiabilityToDelete  = liability;
+        IsDeleteDialogOpen = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (LiabilityToDelete is null) return;
+        try
+        {
+            LiabilityList.Remove(LiabilityToDelete);
+            Snackbar.Add("Liability deleted.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsDeleteDialogOpen = false;
+            LiabilityToDelete  = null;
+        }
+    }
+
+    
+    private Color GetTypeColor(string type) => type?.ToLower() switch
+    {
+        "mortgage"      => Color.Secondary,
+        "car loan"      => Color.Primary,
+        "student loan"  => Color.Tertiary,
+        "credit card"   => Color.Warning,
+        "personal loan" => Color.Info,
+        "business loan" => Color.Dark,
+        "medical debt"  => Color.Error,
+        _               => Color.Default
+    };
+}

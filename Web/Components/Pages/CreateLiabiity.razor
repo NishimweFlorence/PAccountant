@@ -1,0 +1,384 @@
+@page "/liabilities/create"
+@using Application.DTO
+@using Application.Services.Liabilities
+@using MudBlazor
+@using Domain.Entities
+@using MudBlazor.Services
+@using Microsoft.AspNetCore.Components
+@using System.ComponentModel.DataAnnotations
+@using Application.Interfaces
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+@inject ILiabilityService LiabilityService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Create Liability</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-8">
+
+    <MudButton Href="/liabilities"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Variant="Variant.Text"
+               Color="Color.Default"
+               Class="mb-4">
+        Back to Liabilities
+    </MudButton>
+
+    <MudCard Elevation="6" Style="border-radius: 20px; overflow: hidden;">
+
+        <div style="background: linear-gradient(135deg, rgba(14, 2, 1, 0.884) 0%, rgb(63, 16, 11) 55%, #140a02 100%);
+                    padding: 2rem 2rem 1.5rem; display: flex; align-items: center; gap: 1.2rem;">
+            <MudAvatar Style="background: rgba(255,255,255,0.18); width: 58px; height: 58px; backdrop-filter: blur(6px);">
+                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Style="color: white; font-size: 1.6rem;" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.h5" Style="color: white; font-weight: 700; margin: 0;">New Liability</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(49, 140, 214, 0.61); margin: 0;">
+                    Fill in the details to record a new financial obligation
+                </MudText>
+            </div>
+        </div>
+
+        <MudProgressLinear Value="@ProgressPercent"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           Style="border-radius: 0;" />
+
+        <div style="padding: 0.5rem 1.5rem 0; display: flex; justify-content: space-between; align-items: center;">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Form completion</MudText>
+            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">
+                @ProgressPercent%
+            </MudChip>
+        </div>
+
+        <MudCardContent Class="pa-6">
+            <MudForm @ref="form" @bind-IsValid="formIsValid">
+                <MudGrid Spacing="3">
+
+                    @* Liability Type *@
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string"
+                                   Value="@dto.Type"
+                                   ValueChanged="@OnTypeChanged"
+                                   Label="Liability Type"
+                                   Variant="Variant.Outlined"
+                                   AdornmentIcon="@Icons.Material.Filled.Label"
+                                   AdornmentColor="Color.Error"
+                                   Adornment="Adornment.Start"
+                                   Required="true"
+                                   RequiredError="Please select a liability type.">
+                            @foreach (var t in LiabilityTypes)
+                            {
+                                <MudSelectItem T="string" Value="@t">@t</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    @* Lender *@
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string"
+                                      Label="Lender / Creditor"
+                                      Value="@dto.LenderName"
+                                      ValueChanged="@OnLenderChanged"
+                                      Variant="Variant.Outlined"
+                                      AdornmentIcon="@Icons.Material.Filled.Business"
+                                      AdornmentColor="Color.Primary"
+                                      Adornment="Adornment.Start"
+                                      Placeholder="e.g. Bank of America, Visa..."
+                                      Required="true"
+                                      RequiredError="Lender name is required."
+                                      Immediate="true" />
+                    </MudItem>
+
+                    @* Currency *@
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string"
+                                   Value="@dto.Currency"
+                                   ValueChanged="@OnCurrencyChanged"
+                                   Label="Currency"
+                                   Variant="Variant.Outlined"
+                                   AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                   AdornmentColor="Color.Success"
+                                   Adornment="Adornment.Start"
+                                   Required="true"
+                                   RequiredError="Please select a currency.">
+                            @foreach (var c in Currencies)
+                            {
+                                <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    @* Original Amount — no $ sign, currency selected separately *@
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="decimal"
+                                         Label="Original Amount"
+                                         Value="@dto.OriginalAmount"
+                                         ValueChanged="@OnOriginalAmountChanged"
+                                         Variant="Variant.Outlined"
+                                         AdornmentColor="Color.Success"
+                                         Min="0m"
+                                         Step="0.01m"
+                                         Format="F2"
+                                         Required="true"
+                                         RequiredError="Original amount is required."
+                                         Validation="@(new Func<decimal, string?>(ValidateOriginalAmount))"
+                                         Immediate="true" />
+                    </MudItem>
+
+                    @* Current Balance — no $ sign *@
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="decimal"
+                                         Label="Current Balance"
+                                         Value="@dto.CurrentAmount"
+                                         ValueChanged="@OnCurrentAmountChanged"
+                                         Variant="Variant.Outlined"
+                                         AdornmentColor="Color.Info"
+                                         Min="0m"
+                                         Step="0.01m"
+                                         Format="F2"
+                                         Required="true"
+                                         RequiredError="Current balance is required."
+                                         Validation="@(new Func<decimal, string?>(ValidateCurrentAmount))"
+                                         Immediate="true"
+                                         HelperText="@PayoffHelperText" />
+                    </MudItem>
+
+                    @* Payoff progress indicator *@
+                    @if (dto.OriginalAmount > 0 && dto.CurrentAmount >= 0)
+                    {
+                        <MudItem xs="12">
+                            <MudPaper Elevation="0"
+                                      Style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0.85rem 1.1rem;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Success" Size="Size.Small" />
+                                        <MudText Typo="Typo.body2" Color="Color.Success">
+                                            <strong>@dto.Currency @((dto.OriginalAmount - dto.CurrentAmount).ToString("N2"))</strong> paid off
+                                        </MudText>
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">
+                                        @PayoffPercent% done
+                                    </MudChip>
+                                </div>
+                                <MudProgressLinear Value="@PayoffPercent"
+                                                   Color="Color.Success"
+                                                   Size="Size.Medium"
+                                                   Rounded="true" />
+                            </MudPaper>
+                        </MudItem>
+                    }
+
+                    @* Due Date *@
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker Label="Due Date"
+                                       Date="@dueDateNullable"
+                                       DateChanged="@OnDueDateChanged"
+                                       Variant="Variant.Outlined"
+                                       AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                       AdornmentColor="Color.Secondary"
+                                       Required="true"
+                                       RequiredError="Due date is required."
+                                       MinDate="DateTime.Today"
+                                       Editable="true" />
+                    </MudItem>
+
+                    @* Created At (read-only) *@
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string"
+                                      Label="Created At"
+                                      Value="@DateTime.Now.ToString("MMM dd, yyyy  HH:mm")"
+                                      Variant="Variant.Outlined"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      Adornment="Adornment.Start"
+                                      ReadOnly="true"
+                                      HelperText="Auto-set on save"
+                                      Style="opacity: 0.7;" />
+                    </MudItem>
+
+                </MudGrid>
+            </MudForm>
+        </MudCardContent>
+
+        <MudDivider />
+
+        <MudCardActions Class="pa-4" Style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.Close"
+                       OnClick="@GoBack">
+                Cancel
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Warning"
+                       StartIcon="@Icons.Material.Filled.RestartAlt"
+                       OnClick="@ResetForm">
+                Reset
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Info"
+                       OnClick="@HandleSubmit"
+                       Disabled="@isSaving"
+                       Style="min-width: 150px;">
+                @if (isSaving)
+                {
+                    <MudProgressCircular Size="Size.Small"
+                                         Indeterminate="true"
+                                         Class="mr-2"
+                                         Style="color:white;" />
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Save" Class="mr-2" />
+                    <span>Save Liability</span>
+                }
+            </MudButton>
+
+        </MudCardActions>
+
+    </MudCard>
+
+</MudContainer>
+
+@code {
+
+    private List<string> LiabilityTypes = new()
+    {
+        "Mortgage", "Car Loan", "Student Loan", "Credit Card",
+        "Personal Loan", "Business Loan", "Medical Debt", "Other"
+    };
+
+    private List<string> Currencies = new()
+    {
+        "USD", "EUR", "GBP", "RWF", "KES", "UGX", "TZS", "ZAR", "NGN", "GHS"
+    };
+
+    private CreateLiabilityDTO dto = new()
+    {
+        DueDate  = DateTime.Today.AddMonths(1),
+        Currency = "Frw"
+    };
+
+    private DateTime? dueDateNullable = DateTime.Today.AddMonths(1);
+
+    private MudForm form = null!;
+    private bool formIsValid = false;
+    private bool isSaving = false;
+    private int ProgressPercent = 0;
+
+    // ── Computed ─────────────────────────────────────────────────────────────
+    private int PayoffPercent =>
+        dto.OriginalAmount > 0
+            ? (int)Math.Clamp(
+                (dto.OriginalAmount - dto.CurrentAmount) / dto.OriginalAmount * 100, 0, 100)
+            : 0;
+
+    private string PayoffHelperText =>
+        dto.OriginalAmount > 0 ? $"{PayoffPercent}% paid off" : "Amount still owed";
+
+    // ── Change handlers ───────────────────────────────────────────────────────
+    private void OnTypeChanged(string value)
+    {
+        dto.Type = value;
+        UpdateProgress();
+        StateHasChanged();
+    }
+
+    private void OnCurrencyChanged(string value)
+    {
+        dto.Currency = value;
+        UpdateProgress();
+        StateHasChanged();
+    }
+
+    private void OnLenderChanged(string value)
+    {
+        dto.LenderName = value;
+        UpdateProgress();
+    }
+
+    private void OnOriginalAmountChanged(decimal value)
+    {
+        dto.OriginalAmount = value;
+        UpdateProgress();
+    }
+
+    private void OnCurrentAmountChanged(decimal value)
+    {
+        dto.CurrentAmount = value;
+        UpdateProgress();
+    }
+
+    private void OnDueDateChanged(DateTime? date)
+    {
+        dueDateNullable = date;
+        dto.DueDate     = date ?? default;
+        UpdateProgress();
+    }
+
+    // ── Validation ────────────────────────────────────────────────────────────
+    private string? ValidateOriginalAmount(decimal value) =>
+        value <= 0 ? "Original amount must be greater than 0." : null;
+
+    private string? ValidateCurrentAmount(decimal value) =>
+        value < 0 ? "Current balance cannot be negative." : null;
+
+    // ── Progress ──────────────────────────────────────────────────────────────
+    private void UpdateProgress()
+    {
+        int filled = 0;
+        if (!string.IsNullOrWhiteSpace(dto.Type))             filled++;
+        if (!string.IsNullOrWhiteSpace(dto.LenderName))       filled++;
+        if (!string.IsNullOrWhiteSpace(dto.Currency))         filled++;
+        if (dto.OriginalAmount > 0)                            filled++;
+        if (dto.CurrentAmount >= 0 && dto.OriginalAmount > 0) filled++;
+        if (dto.DueDate != default)                            filled++;
+        ProgressPercent = (int)(filled / 6.0 * 100);
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+    private async Task HandleSubmit()
+    {
+        await form.Validate();
+        if (!formIsValid) return;
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            dto.CreatedAt = DateTime.Now;
+            LiabilityService.CreateLiability(dto);
+            Snackbar.Add("Liability saved successfully!", Severity.Success);
+            await Task.Delay(1000);
+            NavigationManager.NavigateTo("/liabilities");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Console.WriteLine($"FULL ERROR: {ex}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ResetForm()
+    {
+        dto = new CreateLiabilityDTO { DueDate = DateTime.Today.AddMonths(1), Currency = "USD" };
+        dueDateNullable = DateTime.Today.AddMonths(1);
+        ProgressPercent = 0;
+        await form.ResetAsync();
+        StateHasChanged();
+    }
+
+    private void GoBack() => NavigationManager.NavigateTo("/liabilities");
+}

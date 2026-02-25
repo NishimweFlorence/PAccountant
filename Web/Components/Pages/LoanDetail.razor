@@ -1,0 +1,83 @@
+@page "/loans/{id:int}"
+@using Application.DTO
+@using Application.Services.Loans
+@using MudBlazor
+
+@inject ILoanService LoanService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Loan Details</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Class="pa-6">
+        <div class="d-flex align-center mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/loans"))" Class="mr-2" />
+            <MudText Typo="Typo.h5">Loan Details</MudText>
+        </div>
+
+        @if (loading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+        else if (loan == null)
+        {
+            <MudAlert Severity="Severity.Error">Loan not found.</MudAlert>
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1"><b>Borrower:</b> @loan.Borrower</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Amount:</b> @loan.Amount.ToString("N2") @loan.Currency</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Interest Rate:</b> @(loan.InterestRate)%</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Total to Pay:</b> @loan.AmountToPay.ToString("N2") @loan.Currency</MudText>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1"><b>Date:</b> @loan.LoanDate?.ToLongDateString()</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Status:</b> 
+                        <MudChip T="string" Color="@GetStatusColor(loan.Status)">@loan.Status</MudChip>
+                    </MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Account ID:</b> @loan.AccountId</MudText>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1"><b>Description:</b></MudText>
+                    <MudText Typo="Typo.body1">@(string.IsNullOrEmpty(loan.Description) ? "No description provided." : loan.Description)</MudText>
+                </MudItem>
+            </MudGrid>
+            <div class="mt-6 d-flex justify-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/loans"))">Back to List</MudButton>
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter] public int id { get; set; }
+    private LoanCreateDTO? loan;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            loan = await LoanService.GetLoanByIdAsync(id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading loan details: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Active" => Color.Success,
+        "Paid" => Color.Info,
+        "Overdue" => Color.Error,
+        _ => Color.Default
+    };
+}

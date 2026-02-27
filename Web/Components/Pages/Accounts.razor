@@ -1,42 +1,45 @@
 @using Domain.Entities
 @using Application.Interfaces
+@using Application.DTO
 @rendermode InteractiveServer
 
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
-
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 @page "/Accounts"
 
 <PageTitle>Accounts</PageTitle>
 
 <MudPaper Class="pa-4">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>Accounts</h3>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>OpenDialog())">Add Account</MudButton>
+    <div class="d-flex justify-content-between align-center mb-4">
+        <MudText Typo="Typo.h5">Accounts</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateAccount())" StartIcon="@Icons.Material.Filled.Add">Add Account</MudButton>
     </div>
 
-    <MudTable Items="accounts" Dense="true" Hover="true" Class="mt-4">
+    <MudTable Items="accounts" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
         <HeaderContent>
-            <MudTh>Id</MudTh>
             <MudTh>Name</MudTh>
             <MudTh>Type</MudTh>
-            <MudTh>balance</MudTh>
+            <MudTh>Balance</MudTh>
             <MudTh>Currency</MudTh>
-             <MudTh>Status</MudTh>
+            <MudTh>Status</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Id">@context.Id</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Balance">@context.balance</MudTd>
+            <MudTd DataLabel="Balance">@context.balance?.ToString("N2")</MudTd>
             <MudTd DataLabel="Currency">@context.Currency</MudTd>
-            <MudTd DataLabel="Status">@context.Status</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Size="Size.Small" Color="@(context.Status == "Active" ? Color.Success : Color.Default)">@context.Status</MudChip>
+            </MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Primary" OnClick="@(()=>Navigation.NavigateTo($"/accounts/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@(()=>Navigation.NavigateTo($"/accounts/edit/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>Navigation.NavigateTo($"/accounts/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditAccount(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteAccount(context.Id))" />
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -44,39 +47,85 @@
 
 @code {
     List<Domain.Entities.Account> accounts = new();
+    private bool loading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAccounts();
+    }
+
+    private async Task LoadAccounts()
+    {
+        loading = true;
         try
         {
             accounts = AccountService.GetAllAccounts();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading accounts: {ex.Message}");
+            Snackbar.Add($"Error loading accounts: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
         }
     }
 
-
-    private async Task OpenDialog(Account? account = null)
+    private async Task CreateAccount()
     {
-        var dialog = await DialogService.ShowAsync<AccountDialog>("Add Account");
+        var parameters = new DialogParameters<AccountDialog>
+        {
+            { x => x.Model, new AccountCreateDTO { Status = "Active" } },
+            { x => x.IsEdit, false }
+        };
+
+        var dialog = await DialogService.ShowAsync<AccountDialog>("Add Account", parameters);
         var result = await dialog.Result;
         
         if (result != null && !result.Canceled)
         {
+            await LoadAccounts();
+        }
+    }
+
+    private async Task EditAccount(Account account)
+    {
+        var parameters = new DialogParameters<AccountDialog>
+        {
+            { x => x.Model, new AccountCreateDTO { 
+                Name = account.Name, 
+                Type = account.Type, 
+                balance = account.balance ?? 0, 
+                Currency = account.Currency, 
+                Status = account.Status 
+            } },
+            { x => x.IsEdit, true },
+            { x => x.AccountId, account.Id }
+        };
+
+        var dialog = await DialogService.ShowAsync<AccountDialog>("Edit Account", parameters);
+        var result = await dialog.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+            await LoadAccounts();
+        }
+    }
+
+    private async Task DeleteAccount(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this account?");
+
+        if (confirmed)
+        {
             try
             {
-                accounts = AccountService.GetAllAccounts();
-                StateHasChanged();
+                Snackbar.Add("Feature coming soon: Delete Account", Severity.Info);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error reloading accounts: {ex.Message}");
+                Snackbar.Add($"Error deleting account: {ex.Message}", Severity.Error);
             }
         }
     }
 }
-
-
-

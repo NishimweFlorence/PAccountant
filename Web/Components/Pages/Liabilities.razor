@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 
 
 <MudText Typo="Typo.h4" Class="mb-4">Liabilities</MudText>
@@ -149,7 +150,7 @@
             <MudGrid Spacing="3">
 
                 <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                    <MudPaper Elevation="0" Class="pa-3 mud-background-gray" Style="border-radius:10px;">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Liability Type</MudText>
                         <div class="mt-1">
                             <MudChip T="string" Size="Size.Small" Color="GetTypeColor(SelectedLiability.Type)">
@@ -160,7 +161,7 @@
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                    <MudPaper Elevation="0" Class="pa-3 mud-background-gray" Style="border-radius:10px;">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Lender / Creditor</MudText>
                         <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
                             @SelectedLiability.LenderName
@@ -169,7 +170,7 @@
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                    <MudPaper Elevation="0" Class="pa-3 mud-background-gray" Style="border-radius:10px;">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Currency</MudText>
                         <div class="mt-1">
                             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
@@ -181,8 +182,8 @@
 
                 <MudItem xs="12" sm="6">
                     <MudPaper Elevation="0" Class="pa-3"
-                              Style="background:#fff3f3; border-radius:10px; border:1px solid #ffcccc;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Original Amount</MudText>
+                               Style="background: var(--mud-palette-error-lighten); border-radius:10px; border:1px solid var(--mud-palette-error);">
+                        <MudText Typo="Typo.caption" Color="Color.Error">Original Amount</MudText>
                         <MudText Typo="Typo.h6" Color="Color.Error" Style="font-weight:700; margin-top:4px;">
                             @SelectedLiability.Currency @SelectedLiability.OriginalAmount.ToString("N2")
                         </MudText>
@@ -191,8 +192,8 @@
 
                 <MudItem xs="12" sm="6">
                     <MudPaper Elevation="0" Class="pa-3"
-                              Style="background:#fff8e1; border-radius:10px; border:1px solid #ffe082;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Current Balance</MudText>
+                               Style="background: var(--mud-palette-warning-lighten); border-radius:10px; border:1px solid var(--mud-palette-warning);">
+                        <MudText Typo="Typo.caption" Color="Color.Warning">Current Balance</MudText>
                         <MudText Typo="Typo.h6" Color="Color.Warning" Style="font-weight:700; margin-top:4px;">
                             @SelectedLiability.Currency @SelectedLiability.CurrentAmount.ToString("N2")
                         </MudText>
@@ -201,8 +202,8 @@
 
                 <MudItem xs="12" sm="6">
                     <MudPaper Elevation="0" Class="pa-3"
-                              Style="background:#f0fdf4; border-radius:10px; border:1px solid #bbf7d0;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Amount Paid Off</MudText>
+                               Style="background: var(--mud-palette-success-lighten); border-radius:10px; border:1px solid var(--mud-palette-success);">
+                        <MudText Typo="Typo.caption" Color="Color.Success">Amount Paid Off</MudText>
                         <MudText Typo="Typo.h6" Color="Color.Success" Style="font-weight:700; margin-top:4px;">
                             @SelectedLiability.Currency @((SelectedLiability.OriginalAmount - SelectedLiability.CurrentAmount).ToString("N2"))
                         </MudText>
@@ -210,7 +211,7 @@
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                    <MudPaper Elevation="0" Class="pa-3 mud-background-gray" Style="border-radius:10px;">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Due Date</MudText>
                         <div style="display:flex; align-items:center; gap:0.5rem; margin-top:4px; flex-wrap:wrap;">
                             <MudText Typo="Typo.body1"
@@ -235,7 +236,7 @@
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
+                    <MudPaper Elevation="0" Class="pa-3 mud-background-gray" Style="border-radius:10px;">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Created At</MudText>
                         <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
                             @SelectedLiability.CreatedAt.ToString("dd MMM yyyy, HH:mm")
@@ -245,7 +246,7 @@
 
                 <MudItem xs="12">
                     <MudPaper Elevation="0" Class="pa-3"
-                              Style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;">
+                               Style="background: var(--mud-palette-success-lighten); border:1px solid var(--mud-palette-success); border-radius:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                             <MudText Typo="Typo.body2" Color="Color.Success">
                                 <strong>Repayment Progress</strong>
@@ -520,19 +521,27 @@
     private async Task ConfirmDelete()
     {
         if (LiabilityToDelete is null) return;
-        try
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the liability from {LiabilityToDelete.LenderName}?");
+        if (confirmed)
         {
-            LiabilityList.Remove(LiabilityToDelete);
-            Snackbar.Add("Liability deleted.", Severity.Success);
+            try
+            {
+                LiabilityList.Remove(LiabilityToDelete);
+                Snackbar.Add("Liability deleted.", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                IsDeleteDialogOpen = false;
+                LiabilityToDelete  = null;
+            }
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error deleting: {ex.Message}", Severity.Error);
-        }
-        finally
+        else
         {
             IsDeleteDialogOpen = false;
-            LiabilityToDelete  = null;
         }
     }
 

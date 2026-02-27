@@ -1,46 +1,45 @@
 @page "/transactionCategories/{Id:int}"
 @using Domain.Entities
-@using Application.Interfaces;
-
-
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@using Microsoft.Identity.Client
+@using Application.Interfaces
+@using MudBlazor
 
 @inject ITransactionCategoryService TransactionCategoryService
+@inject NavigationManager Navigation
+
 <PageTitle>Transaction Category Details</PageTitle>
 
-
-<h1>Transaction Category Details</h1>
-<div>
-    <div class="card mt-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3>Transaction Category Detail</h3>
-            <a href="/TransactionCategories"><button class="btn btn-secondary">Back to Transaction Category List</button></a>
-          </div>
-          <div class ="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Id</dt>
-                <dd class="col-sm-9">@transactionCategory?.Id</dd>
-
-                <dt class="col-sm-3">Name</dt>
-                <dd class="col-sm-9">@transactionCategory?.Name</dd>
-
-                <dt class="col-sm-3">Type</dt>
-                <dd class="col-sm-9">@transactionCategory?.Type</dd>
-
-                
-                
-            </dl>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Class="pa-6">
+        <div class="d-flex align-center mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/transactionCategories"))" Class="mr-2" />
+            <MudText Typo="Typo.h5">Transaction Category Details</MudText>
         </div>
-    </div>
-    </div>
 
+        @if (transactionCategory == null)
+        {
+            <MudAlert Severity="Severity.Error">Category not found.</MudAlert>
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1"><b>Name:</b> @transactionCategory.Name</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Type:</b> @transactionCategory.Type</MudText>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1"><b>Category ID:</b> @transactionCategory.Id</MudText>
+                </MudItem>
+            </MudGrid>
+            <div class="mt-6 d-flex justify-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/transactionCategories"))">Back to List</MudButton>
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
 
 @code
 {
-    [Parameter]
-    public int Id { get; set; }
-
+    [Parameter] public int Id { get; set; }
     public TransactionCategory? transactionCategory;
 
     protected override void OnInitialized()

@@ -1,0 +1,65 @@
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@using Infrastructure.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@layout AuthLayout
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
+    <MudPaper Class="pa-8" Elevation="4">
+        <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Login</MudText>
+        
+        <EditForm Model="@loginModel" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            
+            <MudTextField Label="Email" @bind-Value="loginModel.Email" For="@(() => loginModel.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
+            <MudTextField Label="Password" @bind-Value="loginModel.Password" For="@(() => loginModel.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Margin="Margin.Dense" Class="mb-4" />
+            
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4">Login</MudButton>
+        </EditForm>
+        
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4">
+            Don't have an account? <MudLink Href="/register">Register here</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private UserLoginDTO loginModel = new UserLoginDTO { Email = "", Password = "" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/Dashboard");
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        var user = UserService.ValidateUser(loginModel);
+        if (user != null)
+        {
+            var customAuthStateProvider = (CustomAuthenticationStateProvider)AuthStateProvider;
+            await customAuthStateProvider.UpdateAuthenticationState(new UserSession
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
+            });
+            NavigationManager.NavigateTo("/Dashboard");
+        }
+        else
+        {
+            Snackbar.Add("Invalid email or password", Severity.Error);
+        }
+    }
+}

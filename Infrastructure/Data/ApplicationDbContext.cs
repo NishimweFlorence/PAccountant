@@ -17,5 +17,6 @@ namespace Infrastructure.Data
         public DbSet<LoanRepayment> LoanRepayments { get; set; }
         public DbSet<TransactionCategory> TransactionCategories { get; set; }
         public DbSet<Asset> Assets { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }

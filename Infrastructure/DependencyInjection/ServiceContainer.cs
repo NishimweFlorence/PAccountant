@@ -23,6 +23,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<ILoanRepayment, LoanRepayRepository>();
             services.AddScoped<ITransactionCategory, TransactionCategoryRepository>();
             services.AddScoped<IAsset, AssetRepository>();
+            services.AddScoped<IUser, UserRepository>();
         }
     }
 }

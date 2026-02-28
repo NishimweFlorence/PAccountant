@@ -1,0 +1,48 @@
+@page "/register"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
+@layout AuthLayout
+
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
+    <MudPaper Class="pa-8" Elevation="4">
+        <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Register</MudText>
+        
+        <EditForm Model="@registerModel" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            
+            <MudTextField Label="First Name" @bind-Value="registerModel.FirstName" For="@(() => registerModel.FirstName)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
+            <MudTextField Label="Last Name" @bind-Value="registerModel.LastName" For="@(() => registerModel.LastName)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
+            <MudTextField Label="Email" @bind-Value="registerModel.Email" For="@(() => registerModel.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
+            <MudTextField Label="Password" @bind-Value="registerModel.Password" For="@(() => registerModel.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Margin="Margin.Dense" Class="mb-4" />
+            
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4">Register</MudButton>
+        </EditForm>
+        
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4">
+            Already have an account? <MudLink Href="/">Login here</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private UserCreateDTO registerModel = new UserCreateDTO { FirstName = "", LastName = "", Email = "", Password = "" };
+
+    private void OnValidSubmit()
+    {
+        try
+        {
+            UserService.CreateUser(registerModel);
+            Snackbar.Add("Registration successful! Please login.", Severity.Success);
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Registration failed: {ex.Message}", Severity.Error);
+        }
+    }
+}

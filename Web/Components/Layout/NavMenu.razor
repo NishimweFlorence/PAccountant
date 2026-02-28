@@ -7,34 +7,38 @@
 </div>
 
 <MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-        Home
-    </MudNavLink>
-    <MudNavLink Href="accounts" Icon="@Icons.Material.Filled.AccountBalance">
-        Accounts
-    </MudNavLink>
-    <MudNavLink Href="assets" Icon="@Icons.Material.Filled.AccountBalanceWallet">
-        Assets
-    </MudNavLink>
-    <MudNavLink Href="loans" Icon="@Icons.Material.Filled.Money">
-        Loans
-    </MudNavLink>
-    <MudNavLink Href="loan-repayments" Icon="@Icons.Material.Filled.ReceiptLong">
-        Loans Repayment
-    </MudNavLink>
-    <MudNavLink Href="/liabilities" Icon="@Icons.Material.Filled.People">
-        Liability
-    </MudNavLink>
-    <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.Campaign">
-        Transactions
-    </MudNavLink>
-    <MudNavLink Href="/transactionCategories" Icon="@Icons.Material.Filled.Add">
-        Transaction Categories
-    </MudNavLink>
-    <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Add">
-        Counter
-    </MudNavLink>
-    <MudNavLink Href="weather" Icon="@Icons.Material.Filled.Cloud">
-        Weather
-    </MudNavLink>
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="accounts" Icon="@Icons.Material.Filled.AccountBalance">
+                Accounts
+            </MudNavLink>
+            <MudNavLink Href="assets" Icon="@Icons.Material.Filled.AccountBalanceWallet">
+                Assets
+            </MudNavLink>
+            <MudNavLink Href="loans" Icon="@Icons.Material.Filled.Money">
+                Loans
+            </MudNavLink>
+            <MudNavLink Href="loan-repayments" Icon="@Icons.Material.Filled.ReceiptLong">
+                Loans Repayment
+            </MudNavLink>
+            <MudNavLink Href="/liabilities" Icon="@Icons.Material.Filled.People">
+                Liability
+            </MudNavLink>
+            <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.Campaign">
+                Transactions
+            </MudNavLink>
+            <MudNavLink Href="/transactionCategories" Icon="@Icons.Material.Filled.Add">
+                Transaction Categories
+            </MudNavLink>
+            <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Add">
+                Counter
+            </MudNavLink>
+            <MudNavLink Href="weather" Icon="@Icons.Material.Filled.Cloud">
+                Weather
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 </MudNavMenu>

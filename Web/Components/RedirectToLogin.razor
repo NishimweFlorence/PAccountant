@@ -1,0 +1,12 @@
+@inject NavigationManager NavigationManager
+@code {
+    protected override void OnInitialized()
+    {
+        var relativeUri = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        // Redirection should only happen if we are not already on the login page (root "/") or register page
+        if (!string.IsNullOrEmpty(relativeUri) && !relativeUri.Equals("register", StringComparison.OrdinalIgnoreCase))
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

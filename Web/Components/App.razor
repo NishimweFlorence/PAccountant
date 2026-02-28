@@ -37,7 +37,7 @@
     <MudThemeProvider />
     <MudDialogProvider />
     <MudSnackbarProvider />
-    <Routes @rendermode="InteractiveServer" />
+    <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     @*Mudblazor script*@

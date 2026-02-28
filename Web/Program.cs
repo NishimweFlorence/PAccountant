@@ -11,6 +11,9 @@ using Application.Services.LoanRepayments;
 using Infrastructure.DependencyInjection;
 using Application.Services.Assets;
 using Application.Services.TransactionCategories;
+using Infrastructure.Auth;
+using Microsoft.AspNetCore.Components.Authorization;
+using Application.Services.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +34,10 @@ builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<ILoanRepaymentService, LoanRepaymentService>();
 builder.Services.AddScoped<ITransactionCategoryService, TransactionCategoryService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
@@ -45,6 +52,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 app.UseAntiforgery();
+app.UseAuthorization();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

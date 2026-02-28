@@ -1,122 +1,79 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Infrastructure.Auth
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
 
-@* Required *@
+@* Required providers *@
 <MudThemeProvider DefaultScrollbar="true" @bind-IsDarkMode="@_isDarkMode" Theme="_theme"/>
-<MudPopoverProvider  />
-
-@* Needed for dialogs *@
-<MudDialogProvider  />
-
-
-@* Required *@
-<MudThemeProvider DefaultScrollbar="true"  @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
 <MudPopoverProvider />
-
-@* Needed for dialogs *@
 <MudDialogProvider />
-
-@* Needed for snackbars *@
 <MudSnackbarProvider />
 
 <MudLayout>
- <MudAppBar>
-<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="DrawerToggle" Edge="Edge.Start" />
-         My Application
- <MudSpacer />
-    <MudIconButton  Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"Color="Color.Inherit"OnClick="ToggleTheme" />
-    <MudLink Href="/Register" Color="Color.Inherit" Class="ml-4">
-        <MudIcon Icon="@Icons.Material.Filled.AccountCircle" />
-    </MudLink>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h6" Class="ml-3">PAccountant</MudText>
+        <MudSpacer />
+        
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleDarkMode" />
+        
+        <AuthorizeView>
+            <Authorized>
+                <MudText Typo="Typo.body1" Class="ml-4">Hello, @context.User.Identity?.Name</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" Class="ml-2" />
+            </Authorized>
+            <NotAuthorized>
+                <MudLink Href="/login" Color="Color.Inherit" Class="ml-4">Login</MudLink>
+            </NotAuthorized>
+        </AuthorizeView>
     </MudAppBar>
-         
-    <MudDrawer @bind-Open="@_drawerOpen">
+    
+    <MudDrawer @bind-Open="@_drawerOpen" Elevation="2">
         <NavMenu />
     </MudDrawer>
-
-   <MudAppBar>
-    <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                   Color="Color.Inherit"
-                   Edge="Edge.Start"
-                   OnClick="@((e) => DrawerToggle())" />
-
-    <MudText Typo="Typo.h6" Class="ml-2">PACCountant</MudText>
-
-    <MudSpacer />
-
-    <MudIconButton Icon="@(_isDarkMode 
-        ? Icons.Material.Filled.DarkMode 
-        : Icons.Material.Filled.LightMode)"
-        Color="Color.Inherit"
-        OnClick="ToggleDarkMode" />
-
-    <MudLink Href="/account/login" Color="Color.Inherit" Class="ml-4">
-        <MudIcon Icon="@Icons.Material.Filled.Logout" />
-    </MudLink>
-</MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen">
-       <NavMenu />
-    </MudDrawer>
+    
     <MudMainContent>
-        @Body
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            @Body
+        </MudContainer>
     </MudMainContent>
 </MudLayout>
 
-
 @code {
-    bool _drawerOpen = true;
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
 
-    void DrawerToggle()
+    private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
-
-    private bool _isDarkMode;
-
-    void ToggleTheme()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
-
-    private MudTheme _theme = new MudTheme()
-    {
-
-@code {
-
-    private bool _isDarkMode = false;
-    private bool _drawerOpen = true;
-
-    private MudTheme _theme = new(){
-        PaletteLight = new PaletteLight()
-        {
-            Primary = Colors.Blue.Default,
-            Secondary = Colors.Green.Accent4,
-            AppbarBackground = Colors.BlueGray.Default,
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = Colors.Blue.Default
-        }
-    };
-}
-            AppbarBackground = Colors.Blue.Default,
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = Colors.Blue.Lighten1
-        },
-    };
 
     private void ToggleDarkMode()
     {
         _isDarkMode = !_isDarkMode;
     }
 
-    void DrawerToggle()
+    private async Task Logout()
     {
-        _drawerOpen = !_drawerOpen;
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)AuthStateProvider;
+        await customAuthStateProvider.UpdateAuthenticationState(null);
+        NavigationManager.NavigateTo("/login");
     }
 
-  
+    private MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = Colors.Blue.Default,
+            Secondary = Colors.Green.Accent4,
+            AppbarBackground = Colors.Blue.Default,
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Lighten1
+        }
+    };
 }
 
 

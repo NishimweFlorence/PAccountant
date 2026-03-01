@@ -1,0 +1,138 @@
+@using  Application.DTO
+@using System.ComponentModel.DataAnnotations
+@using Domain.Entities
+@using Application.Interfaces
+@using MudBlazor
+
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(IsEdit ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-2 mb-n1" />
+            @(IsEdit ? "Edit Transaction" : "New Transaction")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="SubmitForm">
+            <DataAnnotationsValidator />
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="int"
+                               @bind-Value="Model.IdTransactionCategory"
+                               Label="Transaction Category"
+                               Variant="Variant.Outlined"
+                               AdornmentIcon="@Icons.Material.Filled.Category"
+                               Adornment="Adornment.Start"
+                               AdornmentColor="Color.Primary"
+                               Required="true">
+                        @foreach (var cat in TransactionCategories)
+                        {
+                            <MudSelectItem T="int" Value="@cat.Key">@cat.Value</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="int"
+                                     @bind-Value="Model.AccountId"
+                                     Label="Account ID"
+                                     Variant="Variant.Outlined"
+                                     AdornmentIcon="@Icons.Material.Filled.AccountBalance"
+                                     Adornment="Adornment.Start"
+                                     AdornmentColor="Color.Secondary"
+                                     Min="1"
+                                     Required="true" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string"
+                               @bind-Value="Model.Currency"
+                               Label="Currency"
+                               Variant="Variant.Outlined"
+                               AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                               Adornment="Adornment.Start"
+                               AdornmentColor="Color.Success"
+                               Required="true">
+                        @foreach (var c in Currencies)
+                        {
+                            <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudNumericField T="decimal"
+                                     @bind-Value="Model.Amount"
+                                     Label="Amount"
+                                     Variant="Variant.Outlined"
+                                     AdornmentColor="Color.Success"
+                                     Min="0.01m"
+                                     Step="0.01m"
+                                     Format="F2"
+                                     Required="true" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Transaction Date"
+                                   Date="@Model.TransactionDate"
+                                   DateChanged="@((DateTime? d) => Model.TransactionDate = d ?? DateTime.Today)"
+                                   Variant="Variant.Outlined"
+                                   AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                   AdornmentColor="Color.Secondary"
+                                   Required="true"
+                                   Editable="true" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitForm">@(IsEdit ? "Update" : "Save")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code{
+    [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
+
+    [Parameter] public CreateTransactionDTO Model { get; set; } = new();
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public int TransactionId { get; set; }
+    [Parameter] public Dictionary<int, string> TransactionCategories { get; set; } = new();
+    [Parameter] public List<string> Currencies { get; set; } = new();
+
+    private void SubmitForm()
+    {
+        try
+        {
+            if (IsEdit)
+            {
+                var updateDto = new UpdateTransactionDTO
+                {
+                    IdTransactionCategory = Model.IdTransactionCategory,
+                    AccountId = Model.AccountId,
+                    Amount = Model.Amount,
+                    Currency = Model.Currency,
+                    TransactionDate = Model.TransactionDate,
+                    CreatedAt = Model.CreatedAt
+                };
+                TransactionService.UpdateTransaction(TransactionId, updateDto);
+                Snackbar.Add("Transaction updated successfully!", Severity.Success);
+            }
+            else
+            {
+                Model.CreatedAt = DateTime.Now;
+                TransactionService.CreateTransaction(Model);
+                Snackbar.Add("Transaction created successfully!", Severity.Success);
+            }
+            DialogInstance.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => DialogInstance.Cancel();
+}

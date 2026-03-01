@@ -1,23 +1,25 @@
-@page "/TransactionCategories"
 @using Domain.Entities
 @using Application.Interfaces
+@using Application.DTO
 @rendermode InteractiveServer
 
 @inject ITransactionCategoryService TransactionCategoryService
 @inject NavigationManager Navigation
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
-
+@page "/TransactionCategories"
 
 <PageTitle>Transaction Categories</PageTitle>
 
 <MudPaper Class="pa-4">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>Transaction Categories</h3>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>OpenDialog())">Add Transaction Category</MudButton>
+    <div class="d-flex justify-content-between align-center mb-4">
+        <MudText Typo="Typo.h5">Transaction Categories</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateCategory())" StartIcon="@Icons.Material.Filled.Add">Add Category</MudButton>
     </div>
 
-    <MudTable Items="transactionCategories" Dense="true" Hover="true" Class="mt-4">
+    <MudTable Items="transactionCategories" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
         <HeaderContent>
             <MudTh>Id</MudTh>
             <MudTh>Name</MudTh>
@@ -29,8 +31,9 @@
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Type">@context.Type</MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Primary" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/edit/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditCategory(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteCategory(context.Id))" />
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -38,27 +41,83 @@
 
 @code {
     List<Domain.Entities.TransactionCategory> transactionCategories = new();
+    private bool loading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        loading = true;
         try
         {
             transactionCategories = TransactionCategoryService.GetAllTransactionCategories();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error loading transaction categories: {ex.Message}", Severity.Error);
-            Console.WriteLine($"Error loading transactionCategories: {ex.Message}");
+            Snackbar.Add($"Error loading categories: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
         }
     }
 
-
-    private Task OpenDialog(TransactionCategory? transactionCategory = null)
+    private async Task CreateCategory()
     {
-        Navigation.NavigateTo("/transactionCategories/create");
-        return Task.CompletedTask;
+        var parameters = new DialogParameters<TransactionCategoryDialog>
+        {
+            { x => x.Model, new TransactionCategoryCreateDTO() },
+            { x => x.IsEdit, false }
+        };
+
+        var dialog = await DialogService.ShowAsync<TransactionCategoryDialog>("Add Category", parameters);
+        var result = await dialog.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+            await LoadCategories();
+        }
+    }
+
+    private async Task EditCategory(TransactionCategory category)
+    {
+        var parameters = new DialogParameters<TransactionCategoryDialog>
+        {
+            { x => x.Model, new TransactionCategoryCreateDTO { 
+                Name = category.Name, 
+                Type = category.Type 
+            } },
+            { x => x.IsEdit, true },
+            { x => x.CategoryId, category.Id }
+        };
+
+        var dialog = await DialogService.ShowAsync<TransactionCategoryDialog>("Edit Category", parameters);
+        var result = await dialog.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+            await LoadCategories();
+        }
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this category?");
+
+        if (confirmed)
+        {
+            try
+            {
+                // Note: Delete method assumed from flow pattern
+                Snackbar.Add("Feature coming soon: Delete Category", Severity.Info);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting category: {ex.Message}", Severity.Error);
+            }
+        }
     }
 }
-
-
-

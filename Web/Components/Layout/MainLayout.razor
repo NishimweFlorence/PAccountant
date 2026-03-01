@@ -5,7 +5,7 @@
 @inject NavigationManager NavigationManager
 
 @* Required providers *@
-<MudThemeProvider DefaultScrollbar="true" @bind-IsDarkMode="@_isDarkMode" Theme="_theme"/>
+<MudThemeProvider DefaultScrollbar="true" @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -15,9 +15,9 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h6" Class="ml-3">PAccountant</MudText>
         <MudSpacer />
-        
+
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleDarkMode" />
-        
+
         <AuthorizeView>
             <Authorized>
                 <MudText Typo="Typo.body1" Class="ml-4">Hello, @context.User.Identity?.Name</MudText>
@@ -28,13 +28,13 @@
             </NotAuthorized>
         </AuthorizeView>
     </MudAppBar>
-    
+
     <MudDrawer @bind-Open="@_drawerOpen" Elevation="2">
         <NavMenu />
     </MudDrawer>
-    
+
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4 pt-4">
             @Body
         </MudContainer>
     </MudMainContent>
@@ -43,16 +43,6 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = false;
-
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    private void ToggleDarkMode()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
 
     private async Task Logout()
     {
@@ -66,14 +56,34 @@
         PaletteLight = new PaletteLight()
         {
             Primary = Colors.Blue.Default,
-            Secondary = Colors.Green.Accent4,
+            Secondary = Colors.Blue.Lighten1,
             AppbarBackground = Colors.Blue.Default,
+            AppbarText = Colors.Shades.White,
+            Background = Colors.Shades.White,
+            DrawerBackground = Colors.Shades.White,
+            TextPrimary = Colors.BlueGray.Darken4
         },
         PaletteDark = new PaletteDark()
         {
-            Primary = Colors.Blue.Lighten1
+            Primary = Colors.Blue.Lighten1,
+            Background = "#0A192F",
+            Surface = "#112240",
+            DrawerBackground = "#112240",
+            AppbarBackground = "#112240"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "8px"
         }
     };
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
 }
-
-

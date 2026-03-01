@@ -9,11 +9,14 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <PageTitle>Transactions — PAccountant</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Transactions</MudText>
-
+<div class="d-flex justify-content-between align-center mb-4">
+    <MudText Typo="Typo.h5">Transactions</MudText>
+    <MudButton OnClick="OpenCreateDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Add Transaction</MudButton>
+</div>
 
 <MudGrid Class="mb-4">
     <MudItem xs="12" sm="6" md="3">
@@ -42,712 +45,105 @@
     </MudItem>
 </MudGrid>
 
-
 <MudPaper Class="pa-3 mb-4" Elevation="1">
     <MudGrid>
         <MudItem xs="12" md="4">
-            <MudTextField @bind-Value="SearchTerm"
-                          Placeholder="Search by account, category..."
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          Immediate="true"
-                          Clearable="true"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense" />
+            <MudTextField @bind-Value="SearchTerm" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
         </MudItem>
         <MudItem xs="12" md="4">
-            <MudSelect T="string"
-                       Value="@FilterCurrency"
-                       ValueChanged="@((string v) => FilterCurrency = v ?? string.Empty)"
-                       Label="Filter by Currency"
-                       Variant="Variant.Outlined"
-                       Margin="Margin.Dense"
-                       Clearable="true">
-                <MudSelectItem T="string" Value="@("")">All Currencies</MudSelectItem>
-                @foreach (var c in Currencies)
-                {
-                    <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
-                }
+            <MudSelect T="string" Value="@FilterCurrency" ValueChanged="@((string v) => FilterCurrency = v ?? string.Empty)" Label="Currency" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                <MudSelectItem T="string" Value="@("")">All</MudSelectItem>
+                @foreach (var c in Currencies) { <MudSelectItem T="string" Value="@c">@c</MudSelectItem> }
             </MudSelect>
-        </MudItem>
-        <MudItem xs="12" md="4" Class="d-flex justify-end align-center">
-            <MudButton OnClick="OpenCreateDialog"
-                       Variant="Variant.Filled"
-                       EndIcon="@Icons.Material.Filled.Add"
-                       Color="Color.Primary">
-                Add Transaction
-            </MudButton>
         </MudItem>
     </MudGrid>
 </MudPaper>
 
-
 <MudPaper Elevation="2">
-    <MudTable Items="FilteredTransactions"
-              Dense="true"
-              Hover="true"
-              Striped="true"
-              Loading="@IsLoading"
-              LoadingProgressColor="Color.Primary"
-              SortLabel="Sort By">
+    <MudTable Items="FilteredTransactions" Dense="true" Hover="true" Striped="true" Loading="@IsLoading" LoadingProgressColor="Color.Primary">
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<TransactionEntity, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TransactionEntity, object>(x => x.IdTransactionCategory)">Category</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TransactionEntity, object>(x => x.AccountId)">Account</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TransactionEntity, object>(x => x.Amount)">Amount</MudTableSortLabel></MudTh>
+            <MudTh>ID</MudTh>
+            <MudTh>Category</MudTh>
+            <MudTh>Account</MudTh>
+            <MudTh>Amount</MudTh>
             <MudTh>Currency</MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TransactionEntity, object>(x => x.TransactionDate)">Transaction Date</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<TransactionEntity, object>(x => x.CreatedAt)">Created At</MudTableSortLabel></MudTh>
+            <MudTh>Date</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="ID">
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
-                    #@context.Id
-                </MudChip>
-            </MudTd>
-            <MudTd DataLabel="Category">
-                <MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">
-                    @GetCategoryName(context.IdTransactionCategory)
-                </MudChip>
-            </MudTd>
-            <MudTd DataLabel="Account">
-                <div style="display:flex; align-items:center; gap:0.4rem;">
-                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Secondary" />
-                    <MudText Typo="Typo.body2">Account #@context.AccountId</MudText>
-                </div>
-            </MudTd>
-            <MudTd DataLabel="Amount">
-                <MudText Typo="Typo.body2" Style="font-weight:600;" Color="Color.Primary">
-                    @context.Amount.ToString("N2")
-                </MudText>
-            </MudTd>
-            <MudTd DataLabel="Currency">
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
-                    @context.Currency
-                </MudChip>
-            </MudTd>
-            <MudTd DataLabel="Transaction Date">
-                <div style="display:flex; align-items:center; gap:0.4rem;">
-                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Color="Color.Secondary" />
-                    @context.TransactionDate.ToString("dd MMM yyyy")
-                </div>
-            </MudTd>
-            <MudTd DataLabel="Created At">@context.CreatedAt.ToString("dd MMM yyyy, HH:mm")</MudTd>
-            <MudTd DataLabel="Actions">
-                <MudTooltip Text="View Details">
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                   Size="Size.Small"
-                                   Color="Color.Info"
-                                   OnClick="@(() => OpenDetailsDialog(context))" />
-                </MudTooltip>
-                <MudTooltip Text="Edit">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Size="Size.Small"
-                                   Color="Color.Primary"
-                                   OnClick="@(() => OpenEditDialog(context))" />
-                </MudTooltip>
-                <MudTooltip Text="Delete">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Size="Size.Small"
-                                   Color="Color.Error"
-                                   OnClick="@(() => OpenDeleteDialog(context))" />
-                </MudTooltip>
+            <MudTd DataLabel="ID">#@context.Id</MudTd>
+            <MudTd DataLabel="Category"><MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">@GetCategoryName(context.IdTransactionCategory)</MudChip></MudTd>
+            <MudTd DataLabel="Account">@context.AccountId</MudTd>
+            <MudTd DataLabel="Amount"><MudText Color="Color.Primary">@context.Amount.ToString("N2")</MudText></MudTd>
+            <MudTd DataLabel="Currency">@context.Currency</MudTd>
+            <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(() => NavigationManager.NavigateTo($"/transactions/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => OpenDeleteConfirmation(context))" />
             </MudTd>
         </RowTemplate>
-        <NoRecordsContent>
-            <div style="text-align:center; padding:3rem;">
-                <MudIcon Icon="@Icons.Material.Filled.ReceiptLong"
-                         Style="font-size:3rem; opacity:0.2; display:block; margin:0 auto 0.8rem;" />
-                <MudText Color="Color.Secondary">No transactions found.</MudText>
-                <MudButton Class="mt-3" Variant="Variant.Outlined"
-                           Color="Color.Primary" OnClick="OpenCreateDialog">
-                    Add your first transaction
-                </MudButton>
-            </div>
-        </NoRecordsContent>
-        <PagerContent>
-            <MudTablePager PageSizeOptions="new int[]{10, 25, 50}" />
-        </PagerContent>
+        <PagerContent><MudTablePager /></PagerContent>
     </MudTable>
 </MudPaper>
 
-
-
-<MudDialog @bind-Visible="IsCreateDialogOpen" Options="FormDialogOptions">
-    <TitleContent>
-        <div style="display:flex; align-items:center; gap:0.6rem;">
-            <MudIcon Icon="@Icons.Material.Filled.AddCircle" Color="Color.Primary" />
-            <MudText Typo="Typo.h6">New Transaction</MudText>
-        </div>
-    </TitleContent>
-    <DialogContent>
-        <MudGrid Spacing="3">
-
-            <MudItem xs="12" sm="6">
-                <MudSelect T="int"
-                           Value="@FormCategoryId"
-                           ValueChanged="@((int v) => FormCategoryId = v)"
-                           Label="Transaction Category"
-                           Variant="Variant.Outlined"
-                           AdornmentIcon="@Icons.Material.Filled.Category"
-                           Adornment="Adornment.Start"
-                           AdornmentColor="Color.Primary"
-                           Required="true"
-                           RequiredError="Category is required.">
-                    @foreach (var cat in TransactionCategories)
-                    {
-                        <MudSelectItem T="int" Value="@cat.Key">@cat.Value</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudNumericField T="int"
-                                 @bind-Value="FormAccountId"
-                                 Label="Account ID"
-                                 Variant="Variant.Outlined"
-                                 AdornmentIcon="@Icons.Material.Filled.AccountBalance"
-                                 Adornment="Adornment.Start"
-                                 AdornmentColor="Color.Secondary"
-                                 Min="1"
-                                 Required="true"
-                                 RequiredError="Account ID is required." />
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudSelect T="string"
-                           Value="@FormCurrency"
-                           ValueChanged="@((string v) => FormCurrency = v)"
-                           Label="Currency"
-                           Variant="Variant.Outlined"
-                           AdornmentIcon="@Icons.Material.Filled.AttachMoney"
-                           Adornment="Adornment.Start"
-                           AdornmentColor="Color.Success"
-                           Required="true">
-                    @foreach (var c in Currencies)
-                    {
-                        <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudNumericField T="decimal"
-                                 @bind-Value="FormAmount"
-                                 Label="Amount"
-                                 Variant="Variant.Outlined"
-                                 AdornmentColor="Color.Success"
-                                 Min="0.01m"
-                                 Step="0.01m"
-                                 Format="F2"
-                                 Required="true"
-                                 RequiredError="Amount is required." />
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudDatePicker Label="Transaction Date"
-                               Date="@FormTransactionDate"
-                               DateChanged="@((DateTime? d) => FormTransactionDate = d)"
-                               Variant="Variant.Outlined"
-                               AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
-                               AdornmentColor="Color.Secondary"
-                               Required="true"
-                               Editable="true" />
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudTextField T="string"
-                              Label="Created At"
-                              Value="@DateTime.Now.ToString("MMM dd, yyyy  HH:mm")"
-                              Variant="Variant.Outlined"
-                              AdornmentIcon="@Icons.Material.Filled.Lock"
-                              Adornment="Adornment.Start"
-                              ReadOnly="true"
-                              HelperText="Auto-set on save"
-                              Style="opacity:0.7;" />
-            </MudItem>
-
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => IsCreateDialogOpen = false)" Variant="Variant.Text">Cancel</MudButton>
-        <MudButton OnClick="SubmitCreateForm"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Disabled="IsSubmitting"
-                   StartIcon="@Icons.Material.Filled.Save">
-            @if (IsSubmitting)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Save
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-
-
-
-<MudDialog @bind-Visible="IsDetailsDialogOpen" Options="FormDialogOptions">
-    <TitleContent>
-        <div style="display:flex; align-items:center; gap:0.6rem;">
-            <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Info" />
-            <MudText Typo="Typo.h6">Transaction Details</MudText>
-        </div>
-    </TitleContent>
-    <DialogContent>
-        @if (SelectedTransaction is not null)
-        {
-            <MudGrid Spacing="3">
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Transaction ID</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
-                            #@SelectedTransaction.Id
-                        </MudText>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Category</MudText>
-                        <div class="mt-1">
-                            <MudChip T="string" Size="Size.Small"
-                                     Color="GetCategoryColor(SelectedTransaction.IdTransactionCategory)">
-                                @GetCategoryName(SelectedTransaction.IdTransactionCategory)
-                            </MudChip>
-                        </div>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Account</MudText>
-                        <div style="display:flex; align-items:center; gap:0.4rem; margin-top:4px;">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Secondary" />
-                            <MudText Typo="Typo.body1" Style="font-weight:600;">
-                                Account #@SelectedTransaction.AccountId
-                            </MudText>
-                        </div>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Currency</MudText>
-                        <div class="mt-1">
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
-                                @SelectedTransaction.Currency
-                            </MudChip>
-                        </div>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3"
-                              Style="background:#f0f4ff; border-radius:10px; border:1px solid #c7d7ff;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Amount</MudText>
-                        <MudText Typo="Typo.h6" Color="Color.Primary" Style="font-weight:700; margin-top:4px;">
-                            @SelectedTransaction.Currency @SelectedTransaction.Amount.ToString("N2")
-                        </MudText>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Transaction Date</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
-                            @SelectedTransaction.TransactionDate.ToString("dd MMM yyyy")
-                        </MudText>
-                    </MudPaper>
-                </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudPaper Elevation="0" Class="pa-3" Style="background:#f5f5f5; border-radius:10px;">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Created At</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight:600; margin-top:4px;">
-                            @SelectedTransaction.CreatedAt.ToString("dd MMM yyyy, HH:mm")
-                        </MudText>
-                    </MudPaper>
-                </MudItem>
-
-            </MudGrid>
-        }
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => IsDetailsDialogOpen = false)" Variant="Variant.Text">Close</MudButton>
-        <MudButton OnClick="@(() => { IsDetailsDialogOpen = false; OpenEditDialog(SelectedTransaction!); })"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Edit">
-            Edit
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-
-
-
-<MudDialog @bind-Visible="IsEditDialogOpen" Options="FormDialogOptions">
-    <TitleContent>
-        <div style="display:flex; align-items:center; gap:0.6rem;">
-            <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-            <MudText Typo="Typo.h6">Edit Transaction #@TransactionToEdit?.Id</MudText>
-        </div>
-    </TitleContent>
-    <DialogContent>
-        <MudGrid Spacing="3">
-
-            <MudItem xs="12" sm="6">
-                <MudSelect T="int"
-                           Value="@FormCategoryId"
-                           ValueChanged="@((int v) => FormCategoryId = v)"
-                           Label="Transaction Category"
-                           Variant="Variant.Outlined"
-                           AdornmentIcon="@Icons.Material.Filled.Category"
-                           Adornment="Adornment.Start"
-                           AdornmentColor="Color.Primary">
-                    @foreach (var cat in TransactionCategories)
-                    {
-                        <MudSelectItem T="int" Value="@cat.Key">@cat.Value</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudNumericField T="int"
-                                 @bind-Value="FormAccountId"
-                                 Label="Account ID"
-                                 Variant="Variant.Outlined"
-                                 AdornmentIcon="@Icons.Material.Filled.AccountBalance"
-                                 Adornment="Adornment.Start"
-                                 AdornmentColor="Color.Secondary"
-                                 Min="1" />
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudSelect T="string"
-                           Value="@FormCurrency"
-                           ValueChanged="@((string v) => FormCurrency = v)"
-                           Label="Currency"
-                           Variant="Variant.Outlined"
-                           AdornmentIcon="@Icons.Material.Filled.AttachMoney"
-                           Adornment="Adornment.Start"
-                           AdornmentColor="Color.Success">
-                    @foreach (var c in Currencies)
-                    {
-                        <MudSelectItem T="string" Value="@c">@c</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudNumericField T="decimal"
-                                 @bind-Value="FormAmount"
-                                 Label="Amount"
-                                 Variant="Variant.Outlined"
-                                 Min="0.01m"
-                                 Step="0.01m"
-                                 Format="F2" />
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudDatePicker Label="Transaction Date"
-                               Date="@FormTransactionDate"
-                               DateChanged="@((DateTime? d) => FormTransactionDate = d)"
-                               Variant="Variant.Outlined"
-                               AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
-                               AdornmentColor="Color.Secondary"
-                               Editable="true" />
-            </MudItem>
-
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => IsEditDialogOpen = false)" Variant="Variant.Text">Cancel</MudButton>
-        <MudButton OnClick="SubmitEditForm"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Disabled="IsSubmitting">
-            @if (IsSubmitting)
-            {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            }
-            Update
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-
-
-
-<MudDialog @bind-Visible="IsDeleteDialogOpen" Options="DeleteDialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6" Color="Color.Error">
-            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-2" />
-            Confirm Delete
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudText>
-            Are you sure you want to delete transaction
-            <strong>#@TransactionToDelete?.Id</strong>
-            of <strong>@TransactionToDelete?.Currency @TransactionToDelete?.Amount.ToString("N2")</strong>?
-        </MudText>
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
-            This action cannot be undone.
-        </MudText>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="@(() => IsDeleteDialogOpen = false)">Cancel</MudButton>
-        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="ConfirmDelete">Delete</MudButton>
-    </DialogActions>
-</MudDialog>
-
-
 @code {
-
     private List<TransactionEntity> TransactionList = new();
-    private bool IsLoading    = true;
-    private bool IsSubmitting = false;
-    private string SearchTerm     = string.Empty;
+    private bool IsLoading = true;
+    private string SearchTerm = string.Empty;
     private string FilterCurrency = string.Empty;
+    private List<string> Currencies = new() { "Frw", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR", "NGN", "GHS" };
+    private Dictionary<int, string> TransactionCategories = new() { { 1, "Income" }, { 2, "Expense" }, { 3, "Transfer" }, { 4, "Savings" }, { 5, "Investment" }, { 6, "Loan Payment" }, { 7, "Other" } };
 
-        private List<string> Currencies = new()
-    {
-        "Frw", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR", "NGN", "GHS"
-    };
+    private decimal TotalAmount => TransactionList.Sum(t => t.Amount);
+    private int ThisMonthCount => TransactionList.Count(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year);
+    private decimal ThisMonthAmount => TransactionList.Where(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year).Sum(t => t.Amount);
 
-    private Dictionary<int, string> TransactionCategories = new()
-    {
-        { 1, "Income"       },
-        { 2, "Expense"      },
-        { 3, "Transfer"     },
-        { 4, "Savings"      },
-        { 5, "Investment"   },
-        { 6, "Loan Payment" },
-        { 7, "Other"        }
-    };
+    private IEnumerable<TransactionEntity> FilteredTransactions => TransactionList.Where(t => (string.IsNullOrWhiteSpace(SearchTerm) || t.AccountId.ToString().Contains(SearchTerm) || GetCategoryName(t.IdTransactionCategory).Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) && (string.IsNullOrWhiteSpace(FilterCurrency) || t.Currency == FilterCurrency));
 
-    
-    private int       FormCategoryId      = 1;
-    private int       FormAccountId       = 1;
-    private decimal   FormAmount          = 0m;
-    private string    FormCurrency        = "Frw";
-    private DateTime? FormTransactionDate = DateTime.Today;
-
-    
-    private bool IsCreateDialogOpen  = false;
-    private bool IsDetailsDialogOpen = false;
-    private bool IsEditDialogOpen    = false;
-    private bool IsDeleteDialogOpen  = false;
-
-    
-    private TransactionEntity? SelectedTransaction;
-    private TransactionEntity? TransactionToEdit;
-    private TransactionEntity? TransactionToDelete;
-
-        private DialogOptions FormDialogOptions = new()
-    {
-        MaxWidth         = MaxWidth.Medium,
-        FullWidth        = true,
-        CloseOnEscapeKey = true,
-        CloseButton      = true
-    };
-
-    private DialogOptions DeleteDialogOptions = new()
-    {
-        MaxWidth  = MaxWidth.ExtraSmall,
-        FullWidth = true
-    };
-
-    private decimal TotalAmount =>
-        TransactionList.Sum(t => t.Amount);
-
-    private int ThisMonthCount =>
-        TransactionList.Count(t =>
-            t.TransactionDate.Month == DateTime.Today.Month &&
-            t.TransactionDate.Year  == DateTime.Today.Year);
-
-    private decimal ThisMonthAmount =>
-        TransactionList
-            .Where(t => t.TransactionDate.Month == DateTime.Today.Month &&
-                        t.TransactionDate.Year  == DateTime.Today.Year)
-            .Sum(t => t.Amount);
-
-    private IEnumerable<TransactionEntity> FilteredTransactions =>
-        TransactionList.Where(t =>
-        {
-            var matchSearch = string.IsNullOrWhiteSpace(SearchTerm) ||
-                t.AccountId.ToString().Contains(SearchTerm) ||
-                t.IdTransactionCategory.ToString().Contains(SearchTerm) ||
-                GetCategoryName(t.IdTransactionCategory)
-                    .Contains(SearchTerm, StringComparison.OrdinalIgnoreCase);
-
-            var matchCurrency = string.IsNullOrWhiteSpace(FilterCurrency) ||
-                t.Currency == FilterCurrency;
-
-            return matchSearch && matchCurrency;
-        });
-
-        protected override async Task OnInitializedAsync()
-    {
-        await LoadTransactions();
-    }
+    protected override async Task OnInitializedAsync() { await LoadTransactions(); }
 
     private async Task LoadTransactions()
     {
         IsLoading = true;
-        try
-        {
-            await Task.Run(() =>
-            {
-                TransactionList = TransactionService.GetAllTransactions();
-            });
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error loading transactions: {ex.Message}", Severity.Error);
-            Console.WriteLine($"LOAD ERROR: {ex}");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        try { TransactionList = TransactionService.GetAllTransactions(); }
+        catch (Exception ex) { Snackbar.Add("Error loading transactions", Severity.Error); }
+        finally { IsLoading = false; }
     }
 
-    
-    private void OpenCreateDialog()
+    private async Task OpenCreateDialog()
     {
-        FormCategoryId      = 1;
-        FormAccountId       = 1;
-        FormAmount          = 0m;
-        FormCurrency        = "Frw";
-        FormTransactionDate = DateTime.Today;
-        IsCreateDialogOpen  = true;
+        var parameters = new DialogParameters<TransactionDialog> { { x => x.Model, new CreateTransactionDTO { TransactionDate = DateTime.Today } }, { x => x.IsEdit, false }, { x => x.TransactionCategories, TransactionCategories }, { x => x.Currencies, Currencies } };
+        var dialog = await DialogService.ShowAsync<TransactionDialog>("New Transaction", parameters);
+        if (!(await dialog.Result).Canceled) await LoadTransactions();
     }
 
-    private async Task SubmitCreateForm()
+    private async Task OpenEditDialog(TransactionEntity t)
     {
-        if (FormAmount <= 0)
-        {
-            Snackbar.Add("Amount must be greater than zero.", Severity.Warning);
-            return;
-        }
-
-        IsSubmitting = true;
-        try
-        {
-            var dto = new CreateTransactionDTO
-            {
-                IdTransactionCategory = FormCategoryId,
-                AccountId             = FormAccountId,
-                Amount                = FormAmount,
-                Currency              = FormCurrency,
-                TransactionDate       = FormTransactionDate ?? DateTime.Today,
-                CreatedAt             = DateTime.Now
-            };
-            TransactionService.CreateTransaction(dto);
-            Snackbar.Add("Transaction created successfully!", Severity.Success);
-            IsCreateDialogOpen = false;
-            await LoadTransactions();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error creating: {ex.Message}", Severity.Error);
-            Console.WriteLine($"CREATE ERROR: {ex}");
-        }
-        finally
-        {
-            IsSubmitting = false;
-        }
+        var parameters = new DialogParameters<TransactionDialog> { 
+            { x => x.Model, new CreateTransactionDTO { 
+                IdTransactionCategory = t.IdTransactionCategory, 
+                AccountId = t.AccountId, 
+                Amount = t.Amount, 
+                Currency = t.Currency, 
+                TransactionDate = t.TransactionDate, 
+                CreatedAt = t.CreatedAt 
+            } }, 
+            { x => x.IsEdit, true }, 
+            { x => x.TransactionId, t.Id }, 
+            { x => x.TransactionCategories, TransactionCategories }, 
+            { x => x.Currencies, Currencies } 
+        };
+        var dialog = await DialogService.ShowAsync<TransactionDialog>("Edit Transaction", parameters);
+        if (!(await dialog.Result).Canceled) await LoadTransactions();
     }
 
-        private void OpenDetailsDialog(TransactionEntity t)
+    private async Task OpenDeleteConfirmation(TransactionEntity t)
     {
-        SelectedTransaction  = t;
-        IsDetailsDialogOpen  = true;
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Delete transaction #{t.Id}?");
+        if (confirmed) { Snackbar.Add("Delete feature coming soon", Severity.Info); }
     }
 
-    
-    private void OpenEditDialog(TransactionEntity t)
-    {
-        TransactionToEdit   = t;
-        FormCategoryId      = t.IdTransactionCategory;
-        FormAccountId       = t.AccountId;
-        FormAmount          = t.Amount;
-        FormCurrency        = t.Currency;
-        FormTransactionDate = t.TransactionDate;
-        IsEditDialogOpen    = true;
-    }
-
-    private async Task SubmitEditForm()
-    {
-        if (TransactionToEdit is null) return;
-        IsSubmitting = true;
-        try
-        {
-            var dto = new UpdateTransactionDTO
-            {
-                IdTransactionCategory = FormCategoryId,
-                AccountId             = FormAccountId,
-                Amount                = FormAmount,
-                Currency              = FormCurrency,
-                TransactionDate       = FormTransactionDate ?? DateTime.Today,
-                CreatedAt             = TransactionToEdit.CreatedAt
-            };
-            TransactionService.UpdateTransaction(TransactionToEdit.Id, dto);
-            Snackbar.Add("Transaction updated successfully!", Severity.Success);
-            IsEditDialogOpen = false;
-            await LoadTransactions();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error updating: {ex.Message}", Severity.Error);
-            Console.WriteLine($"UPDATE ERROR: {ex}");
-        }
-        finally
-        {
-            IsSubmitting = false;
-        }
-    }
-
-    // ── Delete ────────────────────────────────────────────────────────────────
-    private void OpenDeleteDialog(TransactionEntity t)
-    {
-        TransactionToDelete = t;
-        IsDeleteDialogOpen  = true;
-    }
-
-    private async Task ConfirmDelete()
-    {
-        if (TransactionToDelete is null) return;
-        try
-        {
-            TransactionList.Remove(TransactionToDelete);
-            Snackbar.Add("Transaction deleted.", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error deleting: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            IsDeleteDialogOpen  = false;
-            TransactionToDelete = null;
-        }
-    }
-
-    private string GetCategoryName(int id) =>
-        TransactionCategories.TryGetValue(id, out var name) ? name : $"Category {id}";
-
-    private Color GetCategoryColor(int id) => id switch
-    {
-        1 => Color.Success,
-        2 => Color.Error,
-        3 => Color.Info,
-        4 => Color.Tertiary,
-        5 => Color.Primary,
-        6 => Color.Warning,
-        _ => Color.Default
-    };
+    private string GetCategoryName(int id) => TransactionCategories.TryGetValue(id, out var name) ? name : $"Category {id}";
+    private Color GetCategoryColor(int id) => id switch { 1 => Color.Success, 2 => Color.Error, 3 => Color.Info, 4 => Color.Tertiary, 5 => Color.Primary, 6 => Color.Warning, _ => Color.Default };
 }

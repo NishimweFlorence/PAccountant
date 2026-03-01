@@ -3,76 +3,83 @@
 @using Domain.Entities
 @using Application.Interfaces
 @using MudBlazor
-@using MudBlazor.Services
-@using Microsoft.AspNetCore.Components
-@using Microsoft.EntityFrameworkCore.Metadata.Internal
-@rendermode InteractiveServer
 
-@inject NavigationManager Navigation
 @inject IAccountService AccountService
 @inject ISnackbar Snackbar
-@inject IDialogService DialogService
-
 
 <MudDialog>
-<DialogContent>
-    <EditForm EditContext="_editContext" FormName="AccountDialogForm">
-        <DataAnnotationsValidator />
-        <MudGrid>
-            <MudItem xs="12">
-                <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" />
-            </MudItem>
-            <MudItem xs="12">
-                <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" />
-            </MudItem>
-             <MudItem xs="12">
-                <MudTextField Label="balance" @bind-Value="Model.balance" For="@(() => Model.balance)" />
-            </MudItem>
-            <MudItem xs="12">
-                <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" />
-            </MudItem>
-             <MudItem xs="12">
-                <MudTextField Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)" />
-            </MudItem>
-            
-            <MudItem xs="12" class="d-flex justify-content-end">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitForm">Add Account</MudButton>
-            </MudItem>
-        </MudGrid>
-
-</EditForm>
-</DialogContent>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(IsEdit ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-2 mb-n1" />
+            @(IsEdit ? "Edit Account" : "Add New Account")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="SubmitForm">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Label="Balance" @bind-Value="Model.balance" For="@(() => Model.balance)" Variant="Variant.Outlined" Format="N2" />
+                </MudItem>
+                @if (!IsEdit)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Variant="Variant.Outlined" />
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudTextField Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitForm">@(IsEdit ? "Update Account" : "Add Account")</MudButton>
+    </DialogActions>
 </MudDialog>
 
 @code{
     [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
 
-    private AccountCreateDTO Model { get; set; } = new();
-    private EditContext? _editContext;
-   
-
-
-    protected override void OnInitialized()
-    {
-        _editContext = new EditContext(Model);
-    }
+    [Parameter] public AccountCreateDTO Model { get; set; } = new();
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public int AccountId { get; set; }
 
     private void SubmitForm()
     {
-        if (_editContext == null) return;
         try
         {
-            if (_editContext.Validate())
+            if (IsEdit)
+            {
+                var updateDto = new AccountUpdateDTO
+                {
+                    Name = Model.Name,
+                    Type = Model.Type,
+                    balance = Model.balance,
+                    Status = Model.Status
+                };
+                AccountService.UpdateAccount(AccountId, updateDto);
+                Snackbar.Add("Account updated successfully!", Severity.Success);
+            }
+            else
             {
                 AccountService.CreateAccount(Model);
                 Snackbar.Add("Account created successfully!", Severity.Success);
-                DialogInstance.Close();
             }
+            DialogInstance.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to create account: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
     }
 
+    private void Cancel() => DialogInstance.Cancel();
 }

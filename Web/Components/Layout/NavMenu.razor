@@ -1,15 +1,7 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">
-            <span class="bi bi-calculator-fill" aria-hidden="true"></span> PAccountant
-        </a>
-    </div>
-</div>
-
 <MudNavMenu>
     <AuthorizeView>
         <Authorized>
-            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
                 Home
             </MudNavLink>
             <MudNavLink Href="accounts" Icon="@Icons.Material.Filled.AccountBalance">
@@ -32,12 +24,6 @@
             </MudNavLink>
             <MudNavLink Href="/transactionCategories" Icon="@Icons.Material.Filled.Add">
                 Transaction Categories
-            </MudNavLink>
-            <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Add">
-                Counter
-            </MudNavLink>
-            <MudNavLink Href="weather" Icon="@Icons.Material.Filled.Cloud">
-                Weather
             </MudNavLink>
         </Authorized>
     </AuthorizeView>

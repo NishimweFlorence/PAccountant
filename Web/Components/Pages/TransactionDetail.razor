@@ -1,0 +1,52 @@
+@page "/transactions/{Id:int}"
+@using TransactionEntity = Domain.Entities.Transaction
+@using Application.Interfaces
+@using MudBlazor
+
+@inject ITransactionService TransactionService
+@inject NavigationManager Navigation
+
+<PageTitle>Transaction Details</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Class="pa-6">
+        <div class="d-flex align-center mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/transactions"))" Class="mr-2" />
+            <MudText Typo="Typo.h5">Transaction Details</MudText>
+        </div>
+
+        @if (transaction == null)
+        {
+            <MudAlert Severity="Severity.Error">Transaction not found.</MudAlert>
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle1"><b>Transaction ID:</b> #@transaction.Id</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Account ID:</b> @transaction.AccountId</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Category ID:</b> @transaction.IdTransactionCategory</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle1"><b>Amount:</b> <MudText Color="Color.Primary" Inline="true">@transaction.Amount.ToString("N2") @transaction.Currency</MudText></MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Date:</b> @transaction.TransactionDate.ToString("dd MMM yyyy")</MudText>
+                    <MudText Typo="Typo.subtitle1"><b>Created At:</b> @transaction.CreatedAt.ToString("dd MMM yyyy, HH:mm")</MudText>
+                </MudItem>
+            </MudGrid>
+            <div class="mt-6 d-flex justify-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/transactions"))">Back to List</MudButton>
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code
+{
+    [Parameter] public int Id { get; set; }
+    public TransactionEntity? transaction;
+
+    protected override void OnInitialized()
+    {
+        transaction = TransactionService.GetTransactionById(Id);
+    }
+}

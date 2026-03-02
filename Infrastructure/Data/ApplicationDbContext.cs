@@ -18,5 +18,6 @@ namespace Infrastructure.Data
         public DbSet<TransactionCategory> TransactionCategories { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Budget> Budgets { get; set; }
     }
 }

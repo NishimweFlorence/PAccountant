@@ -1,0 +1,187 @@
+@page "/budgets"
+@using Application.Interfaces
+@using Application.DTO
+@using Domain.Entities
+@rendermode InteractiveServer
+
+@inject IBudgetService BudgetService
+@inject ITransactionCategoryService CategoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Budgets — PAccountant</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-8">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight: 800;">Budget Management</MudText>
+            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Plan and track your spending</MudText>
+        </div>
+        <div class="d-flex gap-4">
+            <MudSelect T="int" Value="@SelectedMonth" ValueChanged="OnMonthChanged" Label="Month" Dense="true" Class="mud-width-full" Style="width: 120px;">
+                @for (int i = 1; i <= 12; i++)
+                {
+                    <MudSelectItem Value="@i">@System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(i)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="int" Value="@SelectedYear" ValueChanged="OnYearChanged" Label="Year" Dense="true" Class="mud-width-full" Style="width: 100px;">
+                @for (int i = DateTime.Now.Year - 2; i <= DateTime.Now.Year + 1; i++)
+                {
+                    <MudSelectItem Value="@i">@i</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="ml-4 rounded-lg">
+                Add Budget
+            </MudButton>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else if (!BudgetList.Any())
+    {
+        <MudPaper Elevation="0" Class="pa-12 rounded-xl border-2 border-dashed mud-border-primary text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Primary" Alpha="0.3" />
+            <MudText Typo="Typo.h6" Class="mt-4">No budgets set for @(System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(SelectedMonth)) @SelectedYear</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">Start tracking your goals by creating your first budget.</MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenCreateDialog">Create Budget</MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var budget in BudgetList)
+            {
+                var color = budget.PercentageUsed > 100 ? Color.Error : budget.PercentageUsed > 80 ? Color.Warning : Color.Success;
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="2" Class="pa-6 rounded-xl hover-card">
+                        <div class="d-flex justify-space-between align-center mb-4">
+                            <div>
+                                <MudText Typo="Typo.h6" Style="font-weight: 700;">@budget.CategoryName</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Target: @budget.Amount.ToString("C")</MudText>
+                            </div>
+                            <div class="text-right">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenEditDialog(budget))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteBudget(budget.Id))" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-space-between mb-1">
+                            <MudText Typo="Typo.body2">@budget.SpentAmount.ToString("C") spent</MudText>
+                            <MudText Typo="Typo.body2" Color="color" Style="font-weight: 700;">@budget.PercentageUsed.ToString("F0")%</MudText>
+                        </div>
+                        <MudProgressLinear Value="@budget.PercentageUsed" Color="color" Size="Size.Medium" Rounded="true" Class="mb-2" />
+                        
+                        <div class="d-flex justify-space-between align-end mt-2">
+                             <MudText Typo="Typo.caption" Color="@(budget.RemainingAmount < 0 ? Color.Error : Color.Secondary)">
+                                @(budget.RemainingAmount < 0 ? $"Over budget by {Math.Abs(budget.RemainingAmount):C}" : $"{budget.RemainingAmount:C} remaining")
+                            </MudText>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+<style>
+    .hover-card:hover { transform: translateY(-4px); transition: all 0.3s ease; box-shadow: var(--mud-elevation-8); }
+</style>
+
+@code {
+    private List<BudgetDisplayDTO> BudgetList = new();
+    private int SelectedMonth = DateTime.Now.Month;
+    private int SelectedYear = DateTime.Now.Year;
+    private bool IsLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task OnMonthChanged(int month)
+    {
+        SelectedMonth = month;
+        await LoadData();
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        SelectedYear = year;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        try
+        {
+            BudgetList = await Task.Run(() => BudgetService.GetBudgetsWithUsage(SelectedMonth, SelectedYear));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading budgets: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters { ["Month"] = SelectedMonth, ["Year"] = SelectedYear };
+        
+        var dialog = await DialogService.ShowAsync<BudgetDialog>("Set New Budget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(BudgetDisplayDTO budget)
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters 
+        { 
+            ["BudgetId"] = budget.Id,
+            ["CategoryId"] = budget.CategoryId,
+            ["Amount"] = budget.Amount,
+            ["Month"] = budget.Month,
+            ["Year"] = budget.Year,
+            ["IsEdit"] = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<BudgetDialog>("Update Budget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteBudget(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this budget?");
+        if (confirmed)
+        {
+            try
+            {
+                BudgetService.DeleteBudget(id);
+                Snackbar.Add("Budget deleted successfully", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting budget: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

@@ -1,5 +1,5 @@
-using Domain.Entities;
 using Application.DTO;
+using Domain.Entities;
 
 namespace Application.Interfaces
 {

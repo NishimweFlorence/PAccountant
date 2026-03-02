@@ -7,6 +7,7 @@
 @inject ILiabilityService LiabilityService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IBudgetService BudgetService
 
 <PageTitle>Dashboard — PAccountant</PageTitle>
 
@@ -76,47 +77,21 @@
     </MudGrid>
 
     <MudGrid Class="mb-8">
-        <MudItem xs="12" md="8">
-            <MudPaper Elevation="2" Class="rounded-xl overflow-hidden">
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="rounded-xl overflow-hidden h-100">
                 <div class="px-6 py-4 d-flex justify-space-between align-center" style="border-bottom: 1px solid var(--mud-palette-divider);">
                     <MudText Typo="Typo.h6" Style="font-weight: 700;">All Liabilities</MudText>
                     <MudButton Href="/liabilities/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Size="Size.Small">New</MudButton>
                 </div>
+                <!-- ... existing liabilities list content ... -->
                 <div style="max-height: 400px; overflow-y: auto;">
-                    @if (IsLoading)
-                    {
-                        <div class="pa-6">
-                            <MudSkeleton Width="80%" Height="40px" Class="mb-2" />
-                            <MudSkeleton Width="70%" Height="40px" Class="mb-2" />
-                            <MudSkeleton Width="90%" Height="40px" Class="mb-2" />
-                        </div>
-                    }
-                    else if (!Liabilities.Any())
-                    {
-                        <div class="pa-12 text-center opacity-50">
-                            <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Class="mb-2" />
-                            <MudText>No liabilities recorded yet.</MudText>
-                            <MudLink Href="/liabilities/create" Underline="Underline.Hover">Add your first one</MudLink>
-                        </div>
-                    }
-                    else
-                    {
-                        @foreach (var l in Liabilities.OrderBy(x => x.DueDate))
-                        {
-                            var daysLeft = (l.DueDate - DateTime.Today).Days;
-                            var color = daysLeft < 0 ? Color.Error : daysLeft <= 30 ? Color.Warning : Color.Success;
-                            
+                    @if (IsLoading) { <div class="pa-6"><MudSkeleton Width="80%" Height="40px" /></div> }
+                    else if (!Liabilities.Any()) { <div class="pa-12 text-center opacity-50"><MudText>No liabilities.</MudText></div> }
+                    else {
+                        @foreach (var l in Liabilities.OrderBy(x => x.DueDate)) {
                             <div class="px-6 py-4 d-flex align-center hover-row pointer" @onclick="@(() => NavigationManager.NavigateTo("/liabilities"))" style="border-bottom: 1px solid var(--mud-palette-background-grey);">
-                                <div class="flex-grow-1">
-                                    <MudText Typo="Typo.body1" Style="font-weight: 600;">@l.LenderName</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@l.Type</MudText>
-                                </div>
-                                <div class="text-right mr-4">
-                                    <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">@l.Currency @l.CurrentAmount.ToString("N0")</MudText>
-                                </div>
-                                <MudChip T="string" Size="Size.Small" Color="color" Variant="Variant.Outlined">
-                                    @(daysLeft < 0 ? $"{Math.Abs(daysLeft)}d overdue" : daysLeft == 0 ? "Due today" : $"{daysLeft}d left")
-                                </MudChip>
+                                <div class="flex-grow-1"><MudText Typo="Typo.body1" Style="font-weight: 600;">@l.LenderName</MudText></div>
+                                <div class="text-right mr-4"><MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">@l.Currency @l.CurrentAmount.ToString("N0")</MudText></div>
                             </div>
                         }
                     }
@@ -124,42 +99,42 @@
             </MudPaper>
         </MudItem>
 
-        <MudItem xs="12" md="4">
+        <MudItem xs="12" md="6">
             <MudPaper Elevation="2" Class="pa-6 rounded-xl h-100">
-                <MudText Typo="Typo.h6" Class="mb-6" Style="font-weight: 700;">Payoff Progress</MudText>
+                <div class="d-flex justify-space-between align-center mb-6">
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Budget Monitoring</MudText>
+                    <MudButton Href="/budgets" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Details</MudButton>
+                </div>
                 @if (IsLoading)
                 {
                     <MudSkeleton Width="100%" Height="20px" Class="mb-4" />
                     <MudSkeleton Width="100%" Height="20px" Class="mb-4" />
-                    <MudSkeleton Width="100%" Height="20px" Class="mb-4" />
                 }
-                else if (!Liabilities.Any())
+                else if (!RecentBudgets.Any())
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">No data to display.</MudText>
+                    <div class="pa-8 text-center opacity-50">
+                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Class="mb-2" />
+                        <MudText Typo="Typo.body2">No budgets set for this month.</MudText>
+                        <MudLink Href="/budgets" Underline="Underline.Hover">Set one up</MudLink>
+                    </div>
                 }
                 else
                 {
-                    @foreach (var l in Liabilities.Where(x => x.OriginalAmount > 0).OrderByDescending(x => x.OriginalAmount).Take(5))
+                    @foreach (var b in RecentBudgets.Take(5))
                     {
-                        var pct = (int)Math.Clamp((l.OriginalAmount - l.CurrentAmount) / l.OriginalAmount * 100, 0, 100);
-                        var color = pct >= 75 ? Color.Success : pct >= 40 ? Color.Primary : Color.Error;
-
+                        var color = b.PercentageUsed > 100 ? Color.Error : b.PercentageUsed > 80 ? Color.Warning : Color.Success;
                         <div class="mb-4">
                             <div class="d-flex justify-space-between mb-1">
-                                <MudText Typo="Typo.caption" Style="font-weight: 600;">@l.LenderName</MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 700;">@pct%</MudText>
+                                <MudText Typo="Typo.caption" Style="font-weight: 600;">@b.CategoryName</MudText>
+                                <MudText Typo="Typo.caption" Color="color" Style="font-weight: 700;">@b.PercentageUsed.ToString("F0")%</MudText>
                             </div>
-                            <MudProgressLinear Value="@pct" Color="color" Size="Size.Small" Rounded="true" />
+                            <MudProgressLinear Value="@b.PercentageUsed" Color="color" Size="Size.Small" Rounded="true" />
+                            <div class="d-flex justify-space-between mt-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Spent: @b.SpentAmount.ToString("N0")</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Limit: @b.Amount.ToString("N0")</MudText>
+                            </div>
                         </div>
                     }
-
-                    <div class="mt-8 pt-6" style="border-top: 1px solid var(--mud-palette-divider);">
-                        <div class="d-flex justify-space-between mb-2">
-                            <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">Overall Progress</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 900;">@OverallPayoffPct%</MudText>
-                        </div>
-                        <MudProgressLinear Value="@OverallPayoffPct" Color="Color.Primary" Size="Size.Medium" Rounded="true" />
-                    </div>
                 }
             </MudPaper>
         </MudItem>
@@ -219,6 +194,7 @@
 
 @code {
     private List<Liability> Liabilities = new();
+    private List<BudgetDisplayDTO> RecentBudgets = new();
     private bool IsLoading = true;
 
     private decimal TotalOriginal => Liabilities.Sum(l => l.OriginalAmount);
@@ -247,6 +223,7 @@
             await Task.Run(() =>
             {
                 Liabilities = LiabilityService.GetAllLiabilities();
+                RecentBudgets = BudgetService.GetBudgetsWithUsage(DateTime.Today.Month, DateTime.Today.Year);
             });
         }
         catch (Exception ex)

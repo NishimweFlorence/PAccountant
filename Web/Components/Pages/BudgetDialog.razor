@@ -1,0 +1,124 @@
+@using Application.Interfaces
+@using Application.DTO
+
+@inject IBudgetService BudgetService
+@inject ITransactionCategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudGrid>
+                @if (!IsEdit)
+                {
+                    <MudItem xs="12">
+                        <MudSelect T="int" Label="Category" @bind-Value="CategoryId" Required="true" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var cat in Categories)
+                            {
+                                <MudSelectItem Value="@cat.Id">@cat.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12">
+                         <MudText Typo="Typo.subtitle1">Category: <b>@CategoryName</b></MudText>
+                    </MudItem>
+                }
+                
+                <MudItem xs="12">
+                    <MudNumericField T="decimal" Label="Monthly Budget Amount" @bind-Value="Amount" Required="true" Format="N0" Min="1" />
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudSelect T="int" Label="Month" @bind-Value="Month" Required="true" Dense="true">
+                        @for (int i = 1; i <= 12; i++)
+                        {
+                            <MudSelectItem Value="@i">@System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(i)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudSelect T="int" Label="Year" @bind-Value="Year" Required="true" Dense="true">
+                         @for (int i = DateTime.Now.Year - 1; i <= DateTime.Now.Year + 2; i++)
+                        {
+                            <MudSelectItem Value="@i">@i</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public int? BudgetId { get; set; }
+    [Parameter] public int CategoryId { get; set; }
+    [Parameter] public decimal Amount { get; set; } = 1000;
+    [Parameter] public int Month { get; set; }
+    [Parameter] public int Year { get; set; }
+    [Parameter] public bool IsEdit { get; set; }
+
+    private List<Domain.Entities.TransactionCategory> Categories = new();
+    private MudForm form;
+    private string CategoryName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Categories = CategoryService.GetAllTransactionCategories();
+        if (IsEdit)
+        {
+            var category = Categories.FirstOrDefault(c => c.Id == CategoryId);
+            CategoryName = category?.Name ?? "Unknown";
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (CategoryId <= 0 && !IsEdit)
+        {
+            Snackbar.Add("Please select a category", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            if (IsEdit && BudgetId.HasValue)
+            {
+                BudgetService.UpdateBudget(BudgetId.Value, new BudgetUpdateDTO
+                {
+                    Id = BudgetId.Value,
+                    Amount = Amount,
+                    Month = Month,
+                    Year = Year
+                });
+                Snackbar.Add("Budget updated successfully", Severity.Success);
+            }
+            else
+            {
+                BudgetService.CreateBudget(new BudgetCreateDTO
+                {
+                    CategoryId = CategoryId,
+                    Amount = Amount,
+                    Month = Month,
+                    Year = Year
+                });
+                Snackbar.Add("Budget created successfully", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+}

@@ -14,6 +14,7 @@ using Application.Services.TransactionCategories;
 using Infrastructure.Auth;
 using Microsoft.AspNetCore.Components.Authorization;
 using Application.Services.Users;
+using Application.Services.Budgets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,7 @@ builder.Services.AddScoped<ILoanRepaymentService, LoanRepaymentService>();
 builder.Services.AddScoped<ITransactionCategoryService, TransactionCategoryService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PAccountant")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+62765f47f2dda6ab6c6ff590d2158492be784ef1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3fb749434edd775d4f337112373aba84ddb97d80")]
 [assembly: System.Reflection.AssemblyProductAttribute("PAccountant")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PAccountant")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

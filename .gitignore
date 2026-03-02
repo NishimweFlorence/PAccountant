@@ -69,3 +69,9 @@ yarn-error.log*
 *.bak
 *.tmp
 *.temp
+bin
+obj
+migrations
+.vscode
+Properties
+

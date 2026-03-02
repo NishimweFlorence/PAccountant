@@ -5,7 +5,14 @@ namespace Application.DTO
        
         public string? Name { get; set; }
         public string? Type { get; set; }
-        public string? balance {get;set;}
+        public decimal? OpenBalance {get;set;}
+        public decimal? Balance 
+        {
+            get
+            { 
+                return OpenBalance;
+            } 
+        }
         public string? Currency {get;set;}
         public string? Status {get;set;}
     }

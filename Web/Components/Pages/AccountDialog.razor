@@ -1,0 +1,78 @@
+@using  Application.DTO
+@using System.ComponentModel.DataAnnotations
+@using Domain.Entities
+@using Application.Interfaces
+@using MudBlazor
+@using MudBlazor.Services
+@using Microsoft.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@rendermode InteractiveServer
+
+@inject NavigationManager Navigation
+@inject IAccountService AccountService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+<MudDialog>
+<DialogContent>
+    <EditForm EditContext="_editContext" FormName="AccountDialogForm">
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" />
+            </MudItem>
+             <MudItem xs="12">
+                <MudTextField Label="balance" @bind-Value="Model.balance" For="@(() => Model.balance)" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" />
+            </MudItem>
+             <MudItem xs="12">
+                <MudTextField Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)" />
+            </MudItem>
+            
+            <MudItem xs="12" class="d-flex justify-content-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitForm">Add Account</MudButton>
+            </MudItem>
+        </MudGrid>
+
+</EditForm>
+</DialogContent>
+</MudDialog>
+
+@code{
+    [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
+
+    private AccountCreateDTO Model { get; set; } = new();
+    private EditContext? _editContext;
+   
+
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(Model);
+    }
+
+    private void SubmitForm()
+    {
+        if (_editContext == null) return;
+        try
+        {
+            if (_editContext.Validate())
+            {
+                AccountService.CreateAccount(Model);
+                Snackbar.Add("Account created successfully!", Severity.Success);
+                DialogInstance.Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to create account: {ex.Message}", Severity.Error);
+        }
+    }
+
+}

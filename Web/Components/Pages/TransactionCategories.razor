@@ -1,0 +1,64 @@
+@page "/TransactionCategories"
+@using Domain.Entities
+@using Application.Interfaces
+@rendermode InteractiveServer
+
+@inject ITransactionCategoryService TransactionCategoryService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+
+
+<PageTitle>Transaction Categories</PageTitle>
+
+<MudPaper Class="pa-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Transaction Categories</h3>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>OpenDialog())">Add Transaction Category</MudButton>
+    </div>
+
+    <MudTable Items="transactionCategories" Dense="true" Hover="true" Class="mt-4">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Primary" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/edit/{context.Id}"))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    List<Domain.Entities.TransactionCategory> transactionCategories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            transactionCategories = TransactionCategoryService.GetAllTransactionCategories();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading transaction categories: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Error loading transactionCategories: {ex.Message}");
+        }
+    }
+
+
+    private Task OpenDialog(TransactionCategory? transactionCategory = null)
+    {
+        Navigation.NavigateTo("/transactionCategories/create");
+        return Task.CompletedTask;
+    }
+}
+
+
+

@@ -1,0 +1,142 @@
+@page "/loans"
+@using Application.DTO
+@using Application.Services.Loans
+@using Application.Interfaces
+@using MudBlazor
+
+@inject ILoanService LoanService
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Loans</PageTitle>
+
+<MudPaper Class="pa-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Loans</h3>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateLoan())">Add Loan</MudButton>
+    </div>
+
+    <MudTable Items="loans" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
+        <HeaderContent>
+            <MudTh>Borrower</MudTh>
+            <MudTh>Amount</MudTh>
+            <MudTh>Currency</MudTh>
+            <MudTh>Rate (%)</MudTh>
+            <MudTh>Total to Pay</MudTh>
+            <MudTh>Date</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Borrower">@context.Borrower</MudTd>
+            <MudTd DataLabel="Amount">@context.Amount.ToString("N2")</MudTd>
+            <MudTd DataLabel="Currency">@context.Currency</MudTd>
+            <MudTd DataLabel="Rate">@context.InterestRate.ToString("P2")</MudTd>
+            <MudTd DataLabel="Total">@context.AmountToPay.ToString("N2")</MudTd>
+            <MudTd DataLabel="Date">@context.LoanDate?.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small">@context.Status</MudChip>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>ViewDetails(context.Id))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditLoan(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteLoan(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<LoanCreateDTO> loans = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLoans();
+    }
+
+    private async Task LoadLoans()
+    {
+        loading = true;
+        try
+        {
+            loans = await LoanService.GetAllLoansAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading loans: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Active" => Color.Success,
+        "Paid" => Color.Info,
+        "Overdue" => Color.Error,
+        _ => Color.Default
+    };
+
+    private async Task CreateLoan()
+    {
+        var parameters = new DialogParameters<LoanDialog>
+        {
+            { x => x.Model, new LoanCreateDTO { LoanDate = DateTime.Today, Status = "Active" } },
+            { x => x.IsEdit, false }
+        };
+
+        var dialog = await DialogService.ShowAsync<LoanDialog>("Add Loan", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadLoans();
+        }
+    }
+
+    private async Task EditLoan(LoanCreateDTO loan)
+    {
+        var parameters = new DialogParameters<LoanDialog>
+        {
+            { x => x.Model, loan },
+            { x => x.IsEdit, true }
+        };
+
+        var dialog = await DialogService.ShowAsync<LoanDialog>("Edit Loan", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadLoans();
+        }
+    }
+
+    private void ViewDetails(int id)
+    {
+        Navigation.NavigateTo($"/loans/{id}");
+    }
+
+    private async Task DeleteLoan(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this loan?");
+
+        if (confirmed)
+        {
+            try
+            {
+                await LoanService.DeleteLoanAsync(new LoanDeleteDTO { Id = id });
+                Snackbar.Add("Loan deleted successfully", Severity.Success);
+                await LoadLoans();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting loan: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

@@ -1,14 +1,39 @@
 ﻿
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">
+            <span class="bi bi-calculator-fill" aria-hidden="true"></span> PAccountant
+        </a>
+    </div>
+</div>
+
 
 
 <MudNavMenu>
-    
-            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-            <MudNavLink Href="/liabilities" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.People">Liability</MudNavLink>
-            <MudNavLink Href="/transactions" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Campaign">Transaction</MudNavLink>
-            @* <MudNavLink Href="/tickets" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Support">Support Tickets</MudNavLink>
-            <MudNavLink Href="/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AccountCircle">Users</MudNavLink>
-            <MudNavLink Href="/account/login" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Login">Sign In</MudNavLink>
-            <MudNavLink Href="/register" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.PersonAdd">Register</MudNavLink> *@
-        
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+        Home
+    </MudNavLink>
+    <MudNavLink Href="accounts" Icon="@Icons.Material.Filled.AccountBalance">
+        Accounts
+    </MudNavLink>
+    <MudNavLink Href="loans" Icon="@Icons.Material.Filled.Money">
+        Loans
+    </MudNavLink>
+  
+    <MudNavLink Href="loan-repayments" Icon="@Icons.Material.Filled.Money">
+        Loans Repayment
+    </MudNavLink>
+   <MudNavLink Href="/liabilities" Icon="@Icons.Material.Filled.People">
+        Liability
+    </MudNavLink>
+   <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.Campaign">
+        Liability
+    </MudNavLink>
+    <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Add">
+        Counter
+    </MudNavLink>
+    <MudNavLink Href="weather" Icon="@Icons.Material.Filled.Cloud">
+        Weather
+    </MudNavLink>
 </MudNavMenu>
+

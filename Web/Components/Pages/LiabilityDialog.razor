@@ -1,0 +1,108 @@
+@using Application.DTO
+@using Application.Interfaces
+@using Domain.Entities
+@using MudBlazor
+
+@inject ILiabilityService LiabilityService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(IsEdit ? "Edit Liability" : "Add New Liability")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit" FormName="LiabilityDialogForm">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Required="true" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("Loan")">Loan</MudSelectItem>
+                        <MudSelectItem Value="@("Mortgage")">Mortgage</MudSelectItem>
+                        <MudSelectItem Value="@("Credit Card")">Credit Card</MudSelectItem>
+                        <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Lender Name" @bind-Value="Model.LenderName" For="@(() => Model.LenderName)" Required="true" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Required="true" Variant="Variant.Outlined">
+                        @foreach (var c in Currencies)
+                        {
+                            <MudSelectItem Value="@c">@c</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Label="Original Amount" @bind-Value="Model.OriginalAmount" For="@(() => Model.OriginalAmount)" Format="N2" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Label="Current Amount" @bind-Value="Model.CurrentAmount" For="@(() => Model.CurrentAmount)" Format="N2" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Due Date" @bind-Date="NullableDueDate" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public CreateLiabilityDTO Model { get; set; } = new() { DueDate = DateTime.Today.AddMonths(1), CreatedAt = DateTime.UtcNow, Currency = "RWF" };
+    [Parameter] public bool IsEdit { get; set; } = false;
+    [Parameter] public int LiabilityId { get; set; } = 0;
+
+    private List<string> Currencies = new() { "RWF", "USD", "EUR" };
+
+    private DateTime? NullableDueDate
+    {
+        get => Model.DueDate == default ? DateTime.Today.AddMonths(1) : Model.DueDate;
+        set => Model.DueDate = value ?? DateTime.Today.AddMonths(1);
+    }
+
+    private void Submit()
+    {
+        OnValidSubmit();
+    }
+
+    private async void OnValidSubmit()
+    {
+        try
+        {
+            if (IsEdit)
+            {
+                var updateDto = new UpdateLiabilityDTO
+                {
+                    Type = Model.Type,
+                    Currency = Model.Currency,
+                    OriginalAmount = Model.OriginalAmount,
+                    CurrentAmount = Model.CurrentAmount,
+                    DueDate = Model.DueDate,
+                    CreatedAt = Model.CreatedAt
+                };
+                await LiabilityService.UpdateLiabilityAsync(LiabilityId, updateDto);
+                Snackbar.Add("Liability updated successfully", Severity.Success);
+            }
+            else
+            {
+                await LiabilityService.CreateLiabilityAsync(Model);
+                Snackbar.Add("Liability created successfully", Severity.Success);
+            }
+            MudDialog?.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving liability: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog?.Cancel();
+}

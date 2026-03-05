@@ -11,7 +11,6 @@ namespace Domain.Entities
         public int Year { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // Navigation property (if Category exists in Domain.Entities)
-        // public TransactionCategory Category { get; set; }
+        public virtual TransactionCategory Category { get; set; } = null!;
     }
 }

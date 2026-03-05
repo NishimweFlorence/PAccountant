@@ -20,15 +20,15 @@
         </div>
         <div class="d-flex gap-4">
             <MudSelect T="int" Value="@SelectedMonth" ValueChanged="OnMonthChanged" Label="Month" Dense="true" Class="mud-width-full" Style="width: 120px;">
-                @for (int i = 1; i <= 12; i++)
+                @foreach (var m in FilterMonthOptions)
                 {
-                    <MudSelectItem Value="@i">@System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(i)</MudSelectItem>
+                    <MudSelectItem Value="@m.Value">@m.Label</MudSelectItem>
                 }
             </MudSelect>
             <MudSelect T="int" Value="@SelectedYear" ValueChanged="OnYearChanged" Label="Year" Dense="true" Class="mud-width-full" Style="width: 100px;">
-                @for (int i = DateTime.Now.Year - 2; i <= DateTime.Now.Year + 1; i++)
+                @foreach (var y in FilterYearOptions)
                 {
-                    <MudSelectItem Value="@i">@i</MudSelectItem>
+                    <MudSelectItem Value="@y">@y</MudSelectItem>
                 }
             </MudSelect>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="ml-4 rounded-lg">
@@ -44,7 +44,7 @@
     else if (!BudgetList.Any())
     {
         <MudPaper Elevation="0" Class="pa-12 rounded-xl border-2 border-dashed mud-border-primary text-center">
-            <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Primary" Alpha="0.3" />
+            <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Primary" Style="opacity: 0.3" />
             <MudText Typo="Typo.h6" Class="mt-4">No budgets set for @(System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(SelectedMonth)) @SelectedYear</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">Start tracking your goals by creating your first budget.</MudText>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenCreateDialog">Create Budget</MudButton>
@@ -97,8 +97,27 @@
     private int SelectedYear = DateTime.Now.Year;
     private bool IsLoading = true;
 
+    // Pre-built option lists — avoids Razor for-loop closure-capture bug
+    private record FilterMonthOption(int Value, string Label);
+    private List<FilterMonthOption> FilterMonthOptions = new();
+    private List<int> FilterYearOptions = new();
+
     protected override async Task OnInitializedAsync()
     {
+        for (int m = 1; m <= 12; m++)
+        {
+            int month = m;
+            FilterMonthOptions.Add(new FilterMonthOption(month,
+                System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(month)));
+        }
+
+        int baseYear = DateTime.Now.Year;
+        for (int y = baseYear - 2; y <= baseYear + 2; y++)
+        {
+            int year = y;
+            FilterYearOptions.Add(year);
+        }
+
         await LoadData();
     }
 
@@ -119,7 +138,7 @@
         IsLoading = true;
         try
         {
-            BudgetList = await Task.Run(() => BudgetService.GetBudgetsWithUsage(SelectedMonth, SelectedYear));
+            BudgetList = await BudgetService.GetBudgetsWithUsageAsync(SelectedMonth, SelectedYear);
         }
         catch (Exception ex)
         {
@@ -174,7 +193,7 @@
         {
             try
             {
-                BudgetService.DeleteBudget(id);
+                await BudgetService.DeleteBudgetAsync(id);
                 Snackbar.Add("Budget deleted successfully", Severity.Success);
                 await LoadData();
             }

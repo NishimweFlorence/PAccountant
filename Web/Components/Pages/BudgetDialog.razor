@@ -12,10 +12,15 @@
                 @if (!IsEdit)
                 {
                     <MudItem xs="12">
-                        <MudSelect T="int" Label="Category" @bind-Value="CategoryId" Required="true" AnchorOrigin="Origin.BottomCenter">
+                        <MudSelect T="int?" Label="Category*"
+                                   @bind-Value="SelectedCategoryId"
+                                   Placeholder="Select a category"
+                                   Required="true"
+                                   AnchorOrigin="Origin.BottomCenter"
+                                   Variant="Variant.Outlined">
                             @foreach (var cat in Categories)
                             {
-                                <MudSelectItem Value="@cat.Id">@cat.Name</MudSelectItem>
+                                <MudSelectItem T="int?" Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
                             }
                         </MudSelect>
                     </MudItem>
@@ -23,27 +28,50 @@
                 else
                 {
                     <MudItem xs="12">
-                         <MudText Typo="Typo.subtitle1">Category: <b>@CategoryName</b></MudText>
+                        <MudTextField Value="@CategoryName"
+                                      Label="Category"
+                                      ReadOnly="true"
+                                      Variant="Variant.Outlined"
+                                      Disabled="true" />
                     </MudItem>
                 }
-                
+
                 <MudItem xs="12">
-                    <MudNumericField T="decimal" Label="Monthly Budget Amount" @bind-Value="Amount" Required="true" Format="N0" Min="1" />
+                    <MudNumericField T="decimal"
+                                     Label="Monthly Budget Amount*"
+                                     @bind-Value="Amount"
+                                     Required="true"
+                                     Format="N0"
+                                     Min="1"
+                                     Variant="Variant.Outlined" />
                 </MudItem>
 
                 <MudItem xs="6">
-                    <MudSelect T="int" Label="Month" @bind-Value="Month" Required="true" Dense="true">
-                        @for (int i = 1; i <= 12; i++)
+                    <MudSelect T="int?"
+                               Label="Month*"
+                               @bind-Value="SelectedMonth"
+                               Placeholder="Select month"
+                               Required="true"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined">
+                        @foreach (var m in MonthOptions)
                         {
-                            <MudSelectItem Value="@i">@System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(i)</MudSelectItem>
+                            <MudSelectItem T="int?" Value="@m.Value">@m.Label</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
+
                 <MudItem xs="6">
-                    <MudSelect T="int" Label="Year" @bind-Value="Year" Required="true" Dense="true">
-                         @for (int i = DateTime.Now.Year - 1; i <= DateTime.Now.Year + 2; i++)
+                    <MudSelect T="int?"
+                               Label="Year*"
+                               @bind-Value="SelectedYear"
+                               Placeholder="Select year"
+                               Required="true"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined">
+                        @foreach (var y in YearOptions)
                         {
-                            <MudSelectItem Value="@i">@i</MudSelectItem>
+                            <MudSelectItem T="int?" Value="@y">@y</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -51,8 +79,10 @@
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Update" : "Create")</MudButton>
+        <MudButton OnClick="Cancel" Variant="Variant.Outlined">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">
+            @(IsEdit ? "Update" : "Create")
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -66,27 +96,71 @@
     [Parameter] public int Year { get; set; }
     [Parameter] public bool IsEdit { get; set; }
 
+    // Nullable wrappers so selects show placeholder when nothing is chosen
+    private int? SelectedCategoryId;
+    private int? SelectedMonth;
+    private int? SelectedYear;
+
     private List<Domain.Entities.TransactionCategory> Categories = new();
-    private MudForm form;
+    private MudForm form = default!;
     private string CategoryName = "";
+
+    // Pre-built option lists to avoid Razor for-loop closure bugs
+    private record MonthOption(int? Value, string Label);
+    private List<MonthOption> MonthOptions = new();
+    private List<int?> YearOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
-        Categories = CategoryService.GetAllTransactionCategories();
+        // Build month options
+        for (int m = 1; m <= 12; m++)
+        {
+            int monthNumber = m; // local copy to avoid closure capture issue
+            MonthOptions.Add(new MonthOption(monthNumber,
+                System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(monthNumber)));
+        }
+
+        // Build year options (previous year → current year + 3)
+        int baseYear = DateTime.Now.Year;
+        for (int y = baseYear - 1; y <= baseYear + 3; y++)
+        {
+            int yearNumber = y; // local copy
+            YearOptions.Add(yearNumber);
+        }
+
+        Categories = await CategoryService.GetAllTransactionCategoriesAsync();
+
         if (IsEdit)
         {
             var category = Categories.FirstOrDefault(c => c.Id == CategoryId);
             CategoryName = category?.Name ?? "Unknown";
+            SelectedCategoryId = CategoryId;
         }
+
+        // Pre-select the values passed from the parent page (if they are valid)
+        SelectedMonth = Month > 0 ? Month : (int?)null;
+        SelectedYear = Year > 0 ? Year : (int?)null;
     }
 
     private void Cancel() => MudDialog.Cancel();
 
-    private void Submit()
+    private async Task Submit()
     {
-        if (CategoryId <= 0 && !IsEdit)
+        if (!IsEdit && (SelectedCategoryId == null || SelectedCategoryId <= 0))
         {
-            Snackbar.Add("Please select a category", Severity.Warning);
+            Snackbar.Add("Please select a category.", Severity.Warning);
+            return;
+        }
+
+        if (SelectedMonth == null)
+        {
+            Snackbar.Add("Please select a month.", Severity.Warning);
+            return;
+        }
+
+        if (SelectedYear == null)
+        {
+            Snackbar.Add("Please select a year.", Severity.Warning);
             return;
         }
 
@@ -94,26 +168,27 @@
         {
             if (IsEdit && BudgetId.HasValue)
             {
-                BudgetService.UpdateBudget(BudgetId.Value, new BudgetUpdateDTO
+                await BudgetService.UpdateBudgetAsync(BudgetId.Value, new BudgetUpdateDTO
                 {
                     Id = BudgetId.Value,
                     Amount = Amount,
-                    Month = Month,
-                    Year = Year
+                    Month = SelectedMonth.Value,
+                    Year = SelectedYear.Value
                 });
-                Snackbar.Add("Budget updated successfully", Severity.Success);
+                Snackbar.Add("Budget updated successfully.", Severity.Success);
             }
             else
             {
-                BudgetService.CreateBudget(new BudgetCreateDTO
+                await BudgetService.CreateBudgetAsync(new BudgetCreateDTO
                 {
-                    CategoryId = CategoryId,
+                    CategoryId = SelectedCategoryId!.Value,
                     Amount = Amount,
-                    Month = Month,
-                    Year = Year
+                    Month = SelectedMonth.Value,
+                    Year = SelectedYear.Value
                 });
-                Snackbar.Add("Budget created successfully", Severity.Success);
+                Snackbar.Add("Budget created successfully.", Severity.Success);
             }
+
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)

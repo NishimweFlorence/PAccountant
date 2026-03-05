@@ -15,7 +15,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <EditForm Model="@Model" OnValidSubmit="SubmitForm">
+        <EditForm Model="@Model" OnValidSubmit="SubmitForm" FormName="TransactionCategoryDialogForm">
             <DataAnnotationsValidator />
             <MudGrid>
                 <MudItem xs="12">
@@ -40,7 +40,7 @@
     [Parameter] public bool IsEdit { get; set; }
     [Parameter] public int CategoryId { get; set; }
 
-    private void SubmitForm()
+    private async Task SubmitForm()
     {
         try
         {
@@ -51,12 +51,12 @@
                     Name = Model.Name,
                     Type = Model.Type
                 };
-                TransactionCategoryService.UpdateTransactionCategory(CategoryId, updateDto);
+                await TransactionCategoryService.UpdateTransactionCategoryAsync(CategoryId, updateDto);
                 Snackbar.Add("Category updated successfully!", Severity.Success);
             }
             else
             {
-                TransactionCategoryService.CreateTransactionCategory(Model);
+                await TransactionCategoryService.CreateTransactionCategoryAsync(Model);
                 Snackbar.Add("Category created successfully!", Severity.Success);
             }
             DialogInstance.Close(DialogResult.Ok(true));

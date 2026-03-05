@@ -2,6 +2,8 @@ using Application.DTO;
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Domain.ValueObjects;
 
 namespace Infrastructure.Repositories 
 {
@@ -16,43 +18,37 @@ namespace Infrastructure.Repositories
 
       //Retrieving TransactionCategories
 
-      public List<TransactionCategory> GetAllTransactionCategories()
+      public async Task<List<TransactionCategory>> GetAllTransactionCategoriesAsync()
         {
-           List<TransactionCategory> transactionCategories = _dbContext.TransactionCategories.ToList();
-              return transactionCategories;
-             
+            return await _dbContext.TransactionCategories.ToListAsync();
         }
 
-        public TransactionCategory GetTransactionCategoryById(int id)
+        public async Task<TransactionCategory?> GetTransactionCategoryByIdAsync(int id)
         {
-            return _dbContext.TransactionCategories.FirstOrDefault(c => c.Id == id);
+            return await _dbContext.TransactionCategories.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public void CreateTransactionCategory(TransactionCategoryCreateDTO TransactionCategoryDTO)
+        public async Task CreateTransactionCategoryAsync(TransactionCategoryCreateDTO TransactionCategoryDTO)
         {
             TransactionCategory TransactionCategory = new()
             {
                 Name = TransactionCategoryDTO.Name,
-                Type = TransactionCategoryDTO.Type,
-                
-                
-            
+                Type = TransactionCategoryDTO.Type != null ? TransactionType.FromString(TransactionCategoryDTO.Type) : null,
             };
             _dbContext.TransactionCategories.Add(TransactionCategory);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
     
 
-    public void UpdateTransactionCategory(int id, TransactionCategoryUpdateDTO TransactionCategoryDTO)
+    public async Task UpdateTransactionCategoryAsync(int id, TransactionCategoryUpdateDTO TransactionCategoryDTO)
         {
-            var TransactionCategory = _dbContext.TransactionCategories.Find(id);
+            var TransactionCategory = await _dbContext.TransactionCategories.FindAsync(id);
             if (TransactionCategory == null) return;
-            {
-                TransactionCategory.Name = TransactionCategoryDTO.Name;
-                TransactionCategory.Type = TransactionCategoryDTO.Type;
-                
-                _dbContext.SaveChanges();
-            }
+
+            TransactionCategory.Name = TransactionCategoryDTO.Name;
+            TransactionCategory.Type = TransactionCategoryDTO.Type != null ? TransactionType.FromString(TransactionCategoryDTO.Type) : null;
+            
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

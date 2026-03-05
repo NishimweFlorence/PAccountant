@@ -11,23 +11,22 @@ namespace Application.Services.Liabilities
         {
             _liability = liability;
         }
-        public List<Liability> GetAllLiabilities()
+        public async Task<List<Liability>> GetAllLiabilitiesAsync()
         {
-            List<Liability> _liabilities = _liability.GetAllLiabilities();
-            return _liabilities;
+            return await _liability.GetAllLiabilitiesAsync();
         }
 
-        public Liability GetLiabilityById(int id)
+        public async Task<Liability?> GetLiabilityByIdAsync(int id)
         {
-            return _liability.GetLiabilityById(id);
+            return await _liability.GetLiabilityByIdAsync(id);
         }
-        public void CreateLiability(CreateLiabilityDTO LiabilityDTO)
+        public async Task CreateLiabilityAsync(CreateLiabilityDTO LiabilityDTO)
         {
-            _liability.CreateLiability(LiabilityDTO);
+            await _liability.CreateLiabilityAsync(LiabilityDTO);
         }
-        public void UpdateLiability(int Id, UpdateLiabilityDTO LiabilityDTO)
+        public async Task UpdateLiabilityAsync(int Id, UpdateLiabilityDTO LiabilityDTO)
         {
-            _liability.UpdateLiability(Id, LiabilityDTO);
+            await _liability.UpdateLiabilityAsync(Id, LiabilityDTO);
         }
     }
 }

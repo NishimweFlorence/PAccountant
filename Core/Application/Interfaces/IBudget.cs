@@ -7,13 +7,10 @@ namespace Application.Interfaces
 {
     public interface IBudget
     {
-        List<Budget> GetAllBudgets();
-        Budget GetBudgetById(int id);
-        void CreateBudget(BudgetCreateDTO budgetCreateDTO);
-        void UpdateBudget(int id, BudgetUpdateDTO budgetUpdateDTO);
-        void DeleteBudget(int id);
-        
-        // Business Logic
-        List<BudgetDisplayDTO> GetBudgetsWithUsage(int month, int year);
+        Task<List<Budget>> GetAllBudgetsAsync();
+        Task<Budget?> GetBudgetByIdAsync(int id);
+        Task CreateBudgetAsync(BudgetCreateDTO budgetCreateDTO);
+        Task UpdateBudgetAsync(int id, BudgetUpdateDTO budgetUpdateDTO);
+        Task DeleteBudgetAsync(int id);
     }
 }

@@ -5,9 +5,9 @@ namespace Application.Interfaces
 {
     public interface ILiability
     {
-        List<Liability> GetAllLiabilities();
-        Liability GetLiabilityById(int id);
-        void CreateLiability(CreateLiabilityDTO LiabilityDTO);
-        void UpdateLiability(int Id, UpdateLiabilityDTO LiabilityDTO);
+        Task<List<Liability>> GetAllLiabilitiesAsync();
+        Task<Liability?> GetLiabilityByIdAsync(int id);
+        Task CreateLiabilityAsync(CreateLiabilityDTO LiabilityDTO);
+        Task UpdateLiabilityAsync(int Id, UpdateLiabilityDTO LiabilityDTO);
     }
 }

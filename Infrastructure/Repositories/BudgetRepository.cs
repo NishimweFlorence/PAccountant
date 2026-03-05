@@ -4,6 +4,8 @@ using Application.DTO;
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
 {
@@ -16,17 +18,17 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public List<Budget> GetAllBudgets()
+        public async Task<List<Budget>> GetAllBudgetsAsync()
         {
-            return _context.Budgets.ToList();
+            return await _context.Budgets.ToListAsync();
         }
 
-        public Budget GetBudgetById(int id)
+        public async Task<Budget?> GetBudgetByIdAsync(int id)
         {
-            return _context.Budgets.Find(id);
+            return await _context.Budgets.FindAsync(id);
         }
 
-        public void CreateBudget(BudgetCreateDTO budgetCreateDTO)
+        public async Task CreateBudgetAsync(BudgetCreateDTO budgetCreateDTO)
         {
             var budget = new Budget
             {
@@ -37,35 +39,29 @@ namespace Infrastructure.Repositories
                 CreatedAt  = System.DateTime.Now
             };
             _context.Budgets.Add(budget);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateBudget(int id, BudgetUpdateDTO budgetUpdateDTO)
+        public async Task UpdateBudgetAsync(int id, BudgetUpdateDTO budgetUpdateDTO)
         {
-            var budget = _context.Budgets.Find(id);
+            var budget = await _context.Budgets.FindAsync(id);
             if (budget != null)
             {
                 budget.Amount = budgetUpdateDTO.Amount;
                 budget.Month  = budgetUpdateDTO.Month;
                 budget.Year   = budgetUpdateDTO.Year;
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
 
-        public void DeleteBudget(int id)
+        public async Task DeleteBudgetAsync(int id)
         {
-            var budget = _context.Budgets.Find(id);
+            var budget = await _context.Budgets.FindAsync(id);
             if (budget != null)
             {
                 _context.Budgets.Remove(budget);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
-        }
-
-        public List<BudgetDisplayDTO> GetBudgetsWithUsage(int month, int year)
-        {
-            // This is handled in the Service layer to combine Repository data with Transactions
-            throw new System.NotImplementedException("Usage calculation is handled in BudgetService");
         }
     }
 }

@@ -2,6 +2,8 @@ using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Data;
 using Application.DTO;
+using Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories
 {
@@ -14,17 +16,17 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public Liability GetLiabilityById(int Id)
+        public async Task<Liability?> GetLiabilityByIdAsync(int Id)
         {
-            return _context.Liabilities.Find(Id);
+            return await _context.Liabilities.FirstOrDefaultAsync(l => l.Id == Id);
         }
 
-        public List<Liability> GetAllLiabilities()
+        public async Task<List<Liability>> GetAllLiabilitiesAsync()
         {
-            return _context.Liabilities.ToList();
+            return await _context.Liabilities.ToListAsync();
         }
 
-        public void CreateLiability(CreateLiabilityDTO LiabilityDTO)
+        public async Task CreateLiabilityAsync(CreateLiabilityDTO LiabilityDTO)
         {
             var liability = new Liability
             {
@@ -34,25 +36,24 @@ namespace Infrastructure.Repositories
                 CurrentAmount = LiabilityDTO.CurrentAmount,
                 DueDate = LiabilityDTO.DueDate,
                 CreatedAt = LiabilityDTO.CreatedAt,
-                Currency      = LiabilityDTO.Currency
+                Currency      = Currency.FromCode(LiabilityDTO.Currency)
             };
             _context.Liabilities.Add(liability);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateLiability(int Id, UpdateLiabilityDTO LiabilityDTO)
+        public async Task UpdateLiabilityAsync(int Id, UpdateLiabilityDTO LiabilityDTO)
         {
-            var liability = _context.Liabilities.Find(Id);
+            var liability = await _context.Liabilities.FindAsync(Id);
             if (liability != null)
             {
                 liability.Type = LiabilityDTO.Type;
                 liability.OriginalAmount = LiabilityDTO.OriginalAmount;
                 liability.CurrentAmount = LiabilityDTO.CurrentAmount;
                 liability.DueDate = LiabilityDTO.DueDate;
-                liability.Currency       = LiabilityDTO.Currency;
-                _context.SaveChanges();
+                liability.Currency       = Currency.FromCode(LiabilityDTO.Currency);
+                await _context.SaveChangesAsync();
             }
         }
     }
-    
 }

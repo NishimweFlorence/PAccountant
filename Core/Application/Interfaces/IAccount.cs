@@ -7,11 +7,9 @@ namespace Application.Interfaces
 {
     public interface IAccount
     {
-        public List<Account> GetAllAccounts();
-
-        public Account GetAccountById(int id);
-
-        void CreateAccount(AccountCreateDTO accountCreateDTO);
-        void UpdateAccount(int id,AccountUpdateDTO accountUpdateDTO);
+        Task<List<Account>> GetAllAccountsAsync();
+        Task<Account?> GetAccountByIdAsync(int id);
+        Task CreateAccountAsync(AccountCreateDTO accountCreateDTO);
+        Task UpdateAccountAsync(int id, AccountUpdateDTO accountUpdateDTO);
     }
 }

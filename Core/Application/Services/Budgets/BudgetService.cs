@@ -23,36 +23,38 @@ namespace Application.Services.Budgets
             _categoryService = categoryService;
         }
 
-        public List<Budget> GetAllBudgets()
+        public async Task<List<Budget>> GetAllBudgetsAsync()
         {
-            return _budgetRepo.GetAllBudgets();
+            return await _budgetRepo.GetAllBudgetsAsync();
         }
 
-        public Budget GetBudgetById(int id)
+        public async Task<Budget?> GetBudgetByIdAsync(int id)
         {
-            return _budgetRepo.GetBudgetById(id);
+            return await _budgetRepo.GetBudgetByIdAsync(id);
         }
 
-        public void CreateBudget(BudgetCreateDTO budgetCreateDTO)
+        public async Task CreateBudgetAsync(BudgetCreateDTO budgetCreateDTO)
         {
-            _budgetRepo.CreateBudget(budgetCreateDTO);
+            await _budgetRepo.CreateBudgetAsync(budgetCreateDTO);
         }
 
-        public void UpdateBudget(int id, BudgetUpdateDTO budgetUpdateDTO)
+        public async Task UpdateBudgetAsync(int id, BudgetUpdateDTO budgetUpdateDTO)
         {
-            _budgetRepo.UpdateBudget(id, budgetUpdateDTO);
+            await _budgetRepo.UpdateBudgetAsync(id, budgetUpdateDTO);
         }
 
-        public void DeleteBudget(int id)
+        public async Task DeleteBudgetAsync(int id)
         {
-            _budgetRepo.DeleteBudget(id);
+            await _budgetRepo.DeleteBudgetAsync(id);
         }
 
-        public List<BudgetDisplayDTO> GetBudgetsWithUsage(int month, int year)
+        public async Task<List<BudgetDisplayDTO>> GetBudgetsWithUsageAsync(int month, int year)
         {
-            var budgets = _budgetRepo.GetAllBudgets();
-            var categories = _categoryService.GetAllTransactionCategories();
-            var transactions = _transactionService.GetAllTransactions()
+            var budgets = await _budgetRepo.GetAllBudgetsAsync();
+            var categories = await _categoryService.GetAllTransactionCategoriesAsync(); // This line was in the user's snippet, but not used directly. Keeping it as per instruction.
+            var allTransactions = await _transactionService.GetAllTransactionsAsync();
+            
+            var transactions = allTransactions
                 .Where(t => t.TransactionDate.Month == month && t.TransactionDate.Year == year)
                 .ToList();
 
@@ -60,7 +62,7 @@ namespace Application.Services.Budgets
 
             foreach (var budget in budgets.Where(b => b.Month == month && b.Year == year))
             {
-                var category = _categoryService.GetTransactionCategoryById(budget.CategoryId);
+                var category = await _categoryService.GetTransactionCategoryByIdAsync(budget.CategoryId);
                 var spent = transactions
                     .Where(t => t.IdTransactionCategory == budget.CategoryId)
                     .Sum(t => t.Amount);

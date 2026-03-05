@@ -2,8 +2,11 @@
 @using Application.DTO
 @using Application.Services.Loans
 @using Application.Services.LoanRepayments
+@using Domain.Entities
+@using Application.Interfaces
 @inject ILoanService LoanService
 @inject ILoanRepaymentService LoanRepaymentService
+@inject IAccountService AccountService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -15,6 +18,15 @@
                     @foreach (var loan in Loans)
                     {
                         <MudSelectItem Value="@loan.Id">@loan.Borrower - @loan.Amount (@loan.Currency)</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            <MudSelect T="int" Label="Destination Account" @bind-Value="Model.AccountId" Required="true" RequiredError="Account is required!">
+                @if (Accounts != null)
+                {
+                    @foreach (var account in Accounts)
+                    {
+                        <MudSelectItem Value="@account.Id">@account.Name (@account.Balance @account.Currency?.Code)</MudSelectItem>
                     }
                 }
             </MudSelect>
@@ -39,10 +51,12 @@
     private bool success;
     private MudForm form;
     private List<LoanCreateDTO> Loans = new();
+    private List<Account> Accounts = new();
 
     protected override async Task OnInitializedAsync()
     {
         Loans = await LoanService.GetAllLoansAsync();
+        Accounts = await AccountService.GetAllAccountsAsync();
         if (!IsEdit)
         {
             Model.RepaymentDate = DateTime.Today;
@@ -68,6 +82,7 @@
                     var createDto = new LoanRepaymentCreateDTO
                     {
                         LoanId = Model.LoanId,
+                        AccountId = Model.AccountId,
                         Amount = Model.Amount,
                         RepaymentDate = Model.RepaymentDate ?? DateTime.Now,
                         Note = Model.Note

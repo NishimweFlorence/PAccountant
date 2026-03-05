@@ -1,7 +1,8 @@
-@using Domain.Entities
-@using Application.Interfaces
+@page "/assets"
 @using Application.DTO
-@rendermode InteractiveServer
+@using Application.Interfaces
+@using Domain.Entities
+@using MudBlazor
 
 @inject IAssetService AssetService
 @inject NavigationManager Navigation
@@ -9,35 +10,33 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-@page "/Assets"
-
 <PageTitle>Assets</PageTitle>
 
 <MudPaper Class="pa-4">
-    <div class="d-flex justify-content-between align-center mb-4">
-        <MudText Typo="Typo.h5">Assets</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateAsset())" StartIcon="@Icons.Material.Filled.Add">Add Asset</MudButton>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Assets</h3>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateAsset())">Add Asset</MudButton>
     </div>
 
     <MudTable Items="assets" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
         <HeaderContent>
             <MudTh>Name</MudTh>
             <MudTh>Category</MudTh>
+            <MudTh>Purchase Value</MudTh>
             <MudTh>Current Value</MudTh>
             <MudTh>Currency</MudTh>
             <MudTh>Purchase Date</MudTh>
-            <MudTh>Purchase Value</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Category">@context.Category</MudTd>
-            <MudTd DataLabel="Current Value">@context.CurrentValue.ToString("N2")</MudTd>
-            <MudTd DataLabel="Currency">@context.Currency</MudTd>
-            <MudTd DataLabel="Purchase Date">@context.PurchaseDate.ToShortDateString()</MudTd>
             <MudTd DataLabel="Purchase Value">@context.PurchaseValue.ToString("N2")</MudTd>
+            <MudTd DataLabel="Current Value">@context.CurrentValue.ToString("N2")</MudTd>
+            <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
+            <MudTd DataLabel="Purchase Date">@context.PurchaseDate.ToShortDateString()</MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>Navigation.NavigateTo($"/assets/{context.Id}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>ViewDetails(context.Id))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditAsset(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteAsset(context.Id))" />
             </MudTd>
@@ -46,7 +45,7 @@
 </MudPaper>
 
 @code {
-    List<Domain.Entities.Asset> assets = new();
+    private List<Asset> assets = new();
     private bool loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -59,7 +58,7 @@
         loading = true;
         try
         {
-            assets = AssetService.GetAllAssets();
+            assets = await AssetService.GetAllAssetsAsync();
         }
         catch (Exception ex)
         {
@@ -75,13 +74,13 @@
     {
         var parameters = new DialogParameters<AssetDialog>
         {
-            { x => x.Model, new AssetCreateDTO { PurchaseDate = DateTime.Today } },
+            { x => x.Model, new AssetCreateDTO { PurchaseDate = DateTime.Today, CreatedAt = DateTime.UtcNow } },
             { x => x.IsEdit, false }
         };
 
         var dialog = await DialogService.ShowAsync<AssetDialog>("Add Asset", parameters);
         var result = await dialog.Result;
-        
+
         if (result != null && !result.Canceled)
         {
             await LoadAssets();
@@ -93,12 +92,12 @@
         var parameters = new DialogParameters<AssetDialog>
         {
             { x => x.Model, new AssetCreateDTO { 
-                Name = asset.Name, 
-                Category = asset.Category, 
-                CurrentValue = asset.CurrentValue, 
-                Currency = asset.Currency, 
-                PurchaseDate = asset.PurchaseDate,
+                Name = asset.Name,
+                Category = asset.Category,
+                Currency = asset.Currency?.Code ?? "RWF",
                 PurchaseValue = asset.PurchaseValue,
+                CurrentValue = asset.CurrentValue,
+                PurchaseDate = asset.PurchaseDate,
                 CreatedAt = asset.CreatedAt
             } },
             { x => x.IsEdit, true },
@@ -107,11 +106,16 @@
 
         var dialog = await DialogService.ShowAsync<AssetDialog>("Edit Asset", parameters);
         var result = await dialog.Result;
-        
+
         if (result != null && !result.Canceled)
         {
             await LoadAssets();
         }
+    }
+
+    private void ViewDetails(int id)
+    {
+        Snackbar.Add("Details view open functionality can be integrated later.", Severity.Info);
     }
 
     private async Task DeleteAsset(int id)
@@ -122,8 +126,9 @@
         {
             try
             {
-                // Note: I don't see DeleteAsset in IAssetService.
-                Snackbar.Add("Feature coming soon: Delete Asset", Severity.Info);
+                await AssetService.DeleteAssetAsync(id);
+                Snackbar.Add("Asset deleted successfully", Severity.Success);
+                await LoadAssets();
             }
             catch (Exception ex)
             {

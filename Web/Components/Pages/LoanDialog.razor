@@ -16,37 +16,42 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit" FormName="LoanDialogForm">
             <DataAnnotationsValidator />
             <MudGrid>
                 <MudItem xs="12" md="6">
-                    <MudSelect T="int" Label="Account" @bind-Value="Model.AccountId" For="@(() => Model.AccountId)" Required="true">
+                    <MudSelect T="int" Label="Account" @bind-Value="Model.AccountId" For="@(() => Model.AccountId)" Required="true" Variant="Variant.Outlined">
                         @foreach (var account in accounts)
                         {
-                            <MudSelectItem Value="@account.Id">@account.Name (@account.balance @account.Currency)</MudSelectItem>
+                            <MudSelectItem Value="@account.Id">@account.Name (@account.Balance @account.Currency?.Symbol)</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Borrower" @bind-Value="Model.Borrower" For="@(() => Model.Borrower)" />
+                    <MudTextField Label="Borrower" @bind-Value="Model.Borrower" For="@(() => Model.Borrower)" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudNumericField Label="Amount" Value="Model.Amount" ValueChanged="@((decimal v) => OnAmountChanged(v))" For="@(() => Model.Amount)" Format="N2" />
+                    <MudNumericField Label="Amount" Value="Model.Amount" ValueChanged="@((decimal v) => OnAmountChanged(v))" For="@(() => Model.Amount)" Format="N2" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudNumericField Label="Interest Rate (%)" Value="Model.InterestRate" ValueChanged="@((decimal v) => OnRateChanged(v))" For="@(() => Model.InterestRate)" Format="N2" />
+                    <MudNumericField Label="Interest Rate (%)" Value="Model.InterestRate" ValueChanged="@((decimal v) => OnRateChanged(v))" For="@(() => Model.InterestRate)" Format="N2" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudNumericField Label="Amount to Pay" @bind-Value="Model.AmountToPay" For="@(() => Model.AmountToPay)" Format="N2" ReadOnly="true" HelperText="Automatically calculated" />
+                    <MudNumericField Label="Amount to Pay" @bind-Value="Model.AmountToPay" For="@(() => Model.AmountToPay)" Format="N2" ReadOnly="true" HelperText="Automatically calculated" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" />
+                    <MudSelect T="string" Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Required="true" Variant="Variant.Outlined">
+                        @foreach (var c in Currencies)
+                        {
+                            <MudSelectItem Value="@c">@c</MudSelectItem>
+                        }
+                    </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudDatePicker Label="Loan Date" @bind-Date="Model.LoanDate" For="@(() => Model.LoanDate)" />
+                    <MudDatePicker Label="Loan Date" @bind-Date="Model.LoanDate" For="@(() => Model.LoanDate)" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudSelect T="string" Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)">
+                    <MudSelect T="string" Label="Status" @bind-Value="Model.Status" For="@(() => Model.Status)" Variant="Variant.Outlined">
                         <MudSelectItem Value="@("Active")">Active</MudSelectItem>
                         <MudSelectItem Value="@("Paid")">Paid</MudSelectItem>
                         <MudSelectItem Value="@("Overdue")">Overdue</MudSelectItem>
@@ -54,7 +59,7 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField Label="Description" @bind-Value="Model.Description" For="@(() => Model.Description)" Lines="3" />
+                    <MudTextField Label="Description" @bind-Value="Model.Description" For="@(() => Model.Description)" Lines="3" Variant="Variant.Outlined" />
                 </MudItem>
             </MudGrid>
         </EditForm>
@@ -72,10 +77,11 @@
     [Parameter] public bool IsEdit { get; set; } = false;
 
     private List<Account> accounts = new();
+    private List<string> Currencies = new() { "RWF", "USD", "EUR" };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        accounts = AccountService.GetAllAccounts();
+        accounts = await AccountService.GetAllAccountsAsync();
     }
 
     private void Submit()
@@ -139,3 +145,4 @@
 
     private void Cancel() => MudDialog.Cancel();
 }
+

@@ -17,25 +17,24 @@ namespace Application.Services.Accounts
             _account = account;
         }
         
-            public List<Account> GetAllAccounts()
-            {
-                List<Account> accounts = _account.GetAllAccounts();
-               return accounts;
-            }
+        public async Task<List<Account>> GetAllAccountsAsync()
+        {
+            return await _account.GetAllAccountsAsync();
+        }
 
-            public Account GetAccountById(int id)
-            {
-               return _account.GetAccountById(id);
-            }   
+        public async Task<Account?> GetAccountByIdAsync(int id)
+        {
+            return await _account.GetAccountByIdAsync(id);
+        }   
 
-            public void CreateAccount(AccountCreateDTO accountDTO)
-            {  
-              _account.CreateAccount(accountDTO);
-            }
+        public async Task CreateAccountAsync(AccountCreateDTO accountDTO)
+        {  
+            await _account.CreateAccountAsync(accountDTO);
+        }
 
-            public void UpdateAccount(int id, AccountUpdateDTO accountDTO)
-            {
-               _account.UpdateAccount(id, accountDTO);
-            }
+        public async Task UpdateAccountAsync(int id, AccountUpdateDTO accountDTO)
+        {
+            await _account.UpdateAccountAsync(id, accountDTO);
+        }
     }
 }

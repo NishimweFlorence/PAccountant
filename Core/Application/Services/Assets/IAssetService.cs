@@ -5,9 +5,10 @@ namespace Application.Interfaces
 {
     public interface IAssetService
     {
-        List<Asset> GetAllAssets();
-        Asset GetAssetById(int id);
-        void CreateAsset(AssetCreateDTO assetCreateDTO);
-        void UpdateAsset(int id, AssetUpdateDTO assetUpdateDTO);
+        Task<List<Asset>> GetAllAssetsAsync();
+        Task<Asset> GetAssetByIdAsync(int id);
+        Task CreateAssetAsync(AssetCreateDTO assetCreateDTO);
+        Task UpdateAssetAsync(int id, AssetUpdateDTO assetUpdateDTO);
+        Task DeleteAssetAsync(int id);
     }
 }

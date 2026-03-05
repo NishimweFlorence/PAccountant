@@ -29,7 +29,7 @@
         <RowTemplate>
             <MudTd DataLabel="Id">@context.Id</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd DataLabel="Type">@context.Type?.ToString()</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/{context.Id}"))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditCategory(context))" />
@@ -53,7 +53,7 @@
         loading = true;
         try
         {
-            transactionCategories = TransactionCategoryService.GetAllTransactionCategories();
+            transactionCategories = await TransactionCategoryService.GetAllTransactionCategoriesAsync();
         }
         catch (Exception ex)
         {
@@ -88,7 +88,7 @@
         {
             { x => x.Model, new TransactionCategoryCreateDTO { 
                 Name = category.Name, 
-                Type = category.Type 
+                Type = category.Type?.ToString() 
             } },
             { x => x.IsEdit, true },
             { x => x.CategoryId, category.Id }

@@ -17,35 +17,29 @@ namespace Application.Services.Assets
             _asset = asset;
         }
         
-            public List<Asset> GetAllAssets()
-            {
-                List<Asset> assets = _asset.GetAllAssets();
-               return assets;
-            }
+        public async Task<List<Asset>> GetAllAssetsAsync()
+        {
+            return await _asset.GetAllAssetsAsync();
+        }
 
-            public Asset GetAssetById(int id)
-            {
-               return _asset.GetAssetById(id);
-            }   
+        public async Task<Asset> GetAssetByIdAsync(int id)
+        {
+            return await _asset.GetAssetByIdAsync(id);
+        }
 
-            public void CreateAsset(AssetCreateDTO assetDTO)
-            {  
-              _asset.CreateAsset(assetDTO);
-            }
+        public async Task CreateAssetAsync(AssetCreateDTO assetDTO)
+        {
+            await _asset.CreateAssetAsync(assetDTO);
+        }
 
-            public void UpdateAsset(int id, AssetUpdateDTO assetUpdateDTO)
-            {
-               _asset.UpdateAsset(id, assetUpdateDTO);
-            }
+        public async Task UpdateAssetAsync(int id, AssetUpdateDTO assetUpdateDTO)
+        {
+            await _asset.UpdateAssetAsync(id, assetUpdateDTO);
+        }
 
-    //     List<Domain.Entities.Asset> IAssetService.GetAllAssets()
-    //     {
-    //         throw new NotImplementedException();
-    //     }
-
-    //     Domain.Entities.Asset IAssetService.GetAssetById(int id)
-    //     {
-    //         throw new NotImplementedException();
-    //     }
-    // }
-}}
+        public async Task DeleteAssetAsync(int id)
+        {
+            await _asset.DeleteAssetAsync(id);
+        }
+    }
+}

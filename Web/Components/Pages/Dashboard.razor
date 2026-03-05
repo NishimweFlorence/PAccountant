@@ -1,20 +1,20 @@
-@page "/Dashboard"
+﻿@page "/Dashboard"
 @using Application.Interfaces
 @using Application.DTO
 @using Domain.Entities
 @rendermode InteractiveServer
 
-@inject ILiabilityService LiabilityService
+@inject INetWorthService  NetWorthService
+@inject IBudgetService    BudgetService
+@inject ISnackbar         Snackbar
 @inject NavigationManager NavigationManager
-@inject ISnackbar Snackbar
-@inject IBudgetService BudgetService
 
-<PageTitle>Dashboard — PAccountant</PageTitle>
-
+<PageTitle>Dashboard â€” PAccountant</PageTitle>
 
 <div class="pa-4">
 
-    <div class="d-flex justify-space-between align-end mb-8 pb-4" style="border-bottom: 1px solid var(--mud-palette-divider);">
+    <div class="d-flex justify-space-between align-end mb-8 pb-4"
+         style="border-bottom: 1px solid var(--mud-palette-divider);">
         <div>
             <MudText Typo="Typo.h3" Color="Color.Primary" Style="font-weight: 800;">PAccountant</MudText>
             <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="mt-1">Personal Finance Dashboard</MudText>
@@ -25,189 +25,366 @@
         </div>
     </div>
 
-    @if (!IsLoading && OverdueCount > 0)
+    @if (IsLoading)
     {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-6 rounded-lg">
-            You have <strong>@OverdueCount overdue @(OverdueCount == 1 ? "liability" : "liabilities")</strong>
-            totalling <strong>@OverdueTotal.ToString("N2")</strong>. Review them immediately.
-        </MudAlert>
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-6" />
     }
+    else
+    {
+        <MudPaper Elevation="4" Class="pa-8 rounded-xl mb-8 nw-hero" style="background: linear-gradient(135deg, var(--mud-palette-primary-darken) 0%, var(--mud-palette-primary) 100%);">
+            <MudText Typo="Typo.overline" Style="color: rgba(255,255,255,.75); letter-spacing: 3px;">NET WORTH</MudText>
+            <div class="d-flex align-end gap-4 mt-1 flex-wrap">
+                <MudText Typo="Typo.h2" Style="font-weight: 900; color: white; line-height: 1;">
+                    @Summary!.NetWorth.ToString("N2")
+                </MudText>
+                @{
+                    var nwColor = Summary.NetWorth >= 0 ? "rgba(100,255,160,.9)" : "rgba(255,100,100,.9)";
+                    var nwIcon  = Summary.NetWorth >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown;
+                }
+                <div class="d-flex align-center mb-2" style="color: @nwColor">
+                    <MudIcon Icon="@nwIcon" Size="Size.Medium" Class="mr-1" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700; color: inherit;">
+                        @(Summary.NetWorth >= 0 ? "Positive" : "Negative") Net Worth
+                    </MudText>
+                </div>
+            </div>
+            <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,.70); margin-top: 6px;">
+                Total Value @Summary.TotalValue.ToString("N2") &nbsp;â€”&nbsp; Liabilities @Summary.TotalLiabilities.ToString("N2")
+            </MudText>
+        </MudPaper>
 
-    <MudGrid Class="mb-8">
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-6 rounded-xl border-t-4" Style="border-top-color: var(--mud-palette-primary);">
-                <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Primary" Class="mr-3" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-uppercase" Style="letter-spacing: 1px;">Total Liabilities</MudText>
-                </div>
-                <MudText Typo="Typo.h4" Style="font-weight: 700;">@(IsLoading ? "—" : Liabilities.Count.ToString())</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 d-block">Active obligations tracked</MudText>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-6 rounded-xl border-t-4" Style="border-top-color: var(--mud-palette-error);">
-                <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Error" Class="mr-3" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-uppercase" Style="letter-spacing: 1px;">Original Debt</MudText>
-                </div>
-                <MudText Typo="Typo.h4" Style="font-weight: 700;">@(IsLoading ? "—" : TotalOriginal.ToString("N0"))</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 d-block">Sum of all original amounts</MudText>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-6 rounded-xl border-t-4" Style="border-top-color: var(--mud-palette-warning);">
-                <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Color="Color.Warning" Class="mr-3" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-uppercase" Style="letter-spacing: 1px;">Current Balance</MudText>
-                </div>
-                <MudText Typo="Typo.h4" Style="font-weight: 700;">@(IsLoading ? "—" : TotalCurrent.ToString("N0"))</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 d-block">Still owed across all debts</MudText>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-6 rounded-xl border-t-4" Style="border-top-color: var(--mud-palette-success);">
-                <div class="d-flex align-center mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Success" Class="mr-3" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-uppercase" Style="letter-spacing: 1px;">Total Paid Off</MudText>
-                </div>
-                <MudText Typo="Typo.h4" Style="font-weight: 700;">@(IsLoading ? "—" : TotalPaidOff.ToString("N0"))</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 d-block">@OverallPayoffPct% of total cleared</MudText>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+        <MudGrid Class="mb-8">
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="4" Class="pa-6 rounded-xl h-100">
+                    <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 700;">Asset Distribution</MudText>
+                    <MudChart T="double" ChartType="ChartType.Donut" Width="100%" Height="300px"
+                              Data="@ChartData" Labels="@ChartLabels">
+                        <CustomGraphics>
+                            <text class="donut-inner-text" x="47%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="var(--mud-palette-text-primary)" font-family="Helvetica" font-size="2">Total Value</text>
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--mud-palette-primary)" font-family="Helvetica" font-size="3" font-weight="bold">@Summary.TotalValue.ToString("N0")</text>
+                        </CustomGraphics>
+                    </MudChart>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="4" Class="pa-6 rounded-xl h-100">
+                    <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 700;">Net Worth Breakdown</MudText>
+                    <MudChart ChartType="ChartType.Bar" ChartSeries="@Series" @bind-SelectedIndex="Index" Width="100%" Height="300px" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
 
-    <MudGrid Class="mb-8">
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="rounded-xl overflow-hidden h-100">
-                <div class="px-6 py-4 d-flex justify-space-between align-center" style="border-bottom: 1px solid var(--mud-palette-divider);">
-                    <MudText Typo="Typo.h6" Style="font-weight: 700;">All Liabilities</MudText>
-                    <MudButton Href="/liabilities/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Size="Size.Small">New</MudButton>
+        <MudGrid Class="mb-8">
+
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="rounded-xl overflow-hidden h-100">
+                    <div class="px-6 py-4 d-flex justify-space-between align-center section-header">
+                        <div class="d-flex align-center gap-2">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Accounts</MudText>
+                        </div>
+                        <MudButton Href="/accounts" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Manage</MudButton>
+                    </div>
+                    <div style="max-height: 320px; overflow-y: auto;">
+                        @if (!Summary.Accounts.Any())
+                        {
+                            <div class="pa-8 text-center opacity-50">
+                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Class="mb-2" />
+                                <MudText Typo="Typo.body2">No accounts yet.</MudText>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var acct in Summary.Accounts)
+                            {
+                                <div class="px-6 py-3 d-flex align-center hover-row pointer"
+                                     @onclick="@(() => NavigationManager.NavigateTo("/accounts"))"
+                                     style="border-bottom: 1px solid var(--mud-palette-background-grey);">
+                                    <div class="flex-grow-1">
+                                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@acct.Name</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@acct.Type</MudText>
+                                    </div>
+                                    <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">
+                                        @acct.Currency @acct.Balance.ToString("N2")
+                                    </MudText>
+                                </div>
+                            }
+                            <div class="px-6 py-3 d-flex justify-space-between" style="background: var(--mud-palette-background-grey);">
+                                <MudText Typo="Typo.caption" Style="font-weight: 700;">TOTAL</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 800;">
+                                    @Summary.TotalAccounts.ToString("N2")
+                                </MudText>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="rounded-xl overflow-hidden h-100">
+                    <div class="px-6 py-4 d-flex justify-space-between align-center section-header">
+                        <div class="d-flex align-center gap-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Success" />
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Physical Assets</MudText>
+                        </div>
+                        <MudButton Href="/assets" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Manage</MudButton>
+                    </div>
+                    <div style="max-height: 320px; overflow-y: auto;">
+                        @if (!Summary.Assets.Any())
+                        {
+                            <div class="pa-8 text-center opacity-50">
+                                <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Large" Class="mb-2" />
+                                <MudText Typo="Typo.body2">No assets recorded.</MudText>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var asset in Summary.Assets)
+                            {
+                                <div class="px-6 py-3 d-flex align-center hover-row pointer"
+                                     @onclick="@(() => NavigationManager.NavigateTo("/assets"))"
+                                     style="border-bottom: 1px solid var(--mud-palette-background-grey);">
+                                    <div class="flex-grow-1">
+                                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@asset.Name</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@asset.Category</MudText>
+                                    </div>
+                                    <MudText Typo="Typo.body2" Color="Color.Success" Style="font-weight: 700;">
+                                        @asset.Currency @asset.CurrentValue.ToString("N2")
+                                    </MudText>
+                                </div>
+                            }
+                            <div class="px-6 py-3 d-flex justify-space-between" style="background: var(--mud-palette-background-grey);">
+                                <MudText Typo="Typo.caption" Style="font-weight: 700;">TOTAL</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Success" Style="font-weight: 800;">
+                                    @Summary.TotalAssets.ToString("N2")
+                                </MudText>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Elevation="2" Class="rounded-xl overflow-hidden mb-8">
+            <div class="px-6 py-4 d-flex justify-space-between align-center section-header">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Handshake" Color="Color.Info" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Loans Given (IOUs)</MudText>
                 </div>
-                <!-- ... existing liabilities list content ... -->
-                <div style="max-height: 400px; overflow-y: auto;">
-                    @if (IsLoading) { <div class="pa-6"><MudSkeleton Width="80%" Height="40px" /></div> }
-                    else if (!Liabilities.Any()) { <div class="pa-12 text-center opacity-50"><MudText>No liabilities.</MudText></div> }
-                    else {
-                        @foreach (var l in Liabilities.OrderBy(x => x.DueDate)) {
-                            <div class="px-6 py-4 d-flex align-center hover-row pointer" @onclick="@(() => NavigationManager.NavigateTo("/liabilities"))" style="border-bottom: 1px solid var(--mud-palette-background-grey);">
-                                <div class="flex-grow-1"><MudText Typo="Typo.body1" Style="font-weight: 600;">@l.LenderName</MudText></div>
-                                <div class="text-right mr-4"><MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 700;">@l.Currency @l.CurrentAmount.ToString("N0")</MudText></div>
+                <MudButton Href="/loans" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Manage</MudButton>
+            </div>
+            @if (!Summary.LoansGiven.Any())
+            {
+                <div class="pa-8 text-center opacity-50">
+                    <MudIcon Icon="@Icons.Material.Filled.Handshake" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.body2">No outstanding loans given.</MudText>
+                </div>
+            }
+            else
+            {
+                <div style="overflow-x: auto;">
+                    <table class="nw-table">
+                        <thead>
+                            <tr>
+                                <th>Borrower</th>
+                                <th class="text-right">Amount Lent</th>
+                                <th class="text-right">Amount to Receive</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var loan in Summary.LoansGiven)
+                            {
+                                var isClosed = loan.Status?.Equals("Repaid", StringComparison.OrdinalIgnoreCase) == true
+                                           || loan.Status?.Equals("Paid",    StringComparison.OrdinalIgnoreCase) == true;
+                                <tr class="hover-row pointer" @onclick="@(() => NavigationManager.NavigateTo("/loans"))">
+                                    <td>@loan.Borrower</td>
+                                    <td class="text-right">@loan.Currency @loan.AmountLent.ToString("N2")</td>
+                                    <td class="text-right" style="font-weight: 700; color: var(--mud-palette-info);">
+                                        @loan.Currency @loan.AmountToPay.ToString("N2")
+                                    </td>
+                                    <td>@loan.LoanDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(isClosed ? Color.Default : Color.Info)"
+                                                 Variant="Variant.Filled">
+                                            @loan.Status
+                                        </MudChip>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-3 d-flex justify-end" style="background: var(--mud-palette-background-grey);">
+                    <MudText Typo="Typo.caption" Class="mr-4" Style="font-weight: 700;">TOTAL OUTSTANDING</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Info" Style="font-weight: 800;">
+                        @Summary.TotalLoansGiven.ToString("N2")
+                    </MudText>
+                </div>
+            }
+        </MudPaper>
+
+        <MudGrid Class="mb-8">
+
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="rounded-xl overflow-hidden h-100">
+                    <div class="px-6 py-4 d-flex justify-space-between align-center section-header">
+                        <div class="d-flex align-center gap-2">
+                            <MudIcon Icon="@Icons.Material.Filled.CreditCard" Color="Color.Error" />
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Liabilities</MudText>
+                        </div>
+                        <MudButton Href="/liabilities" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Manage</MudButton>
+                    </div>
+                    <div style="max-height: 360px; overflow-y: auto;">
+                        @if (!Summary.Liabilities.Any())
+                        {
+                            <div class="pa-8 text-center opacity-50">
+                                <MudText Typo="Typo.body2">No liabilities. Great job! ðŸŽ‰</MudText>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var liab in Summary.Liabilities.OrderBy(l => l.DueDate))
+                            {
+                                var isOverdue = liab.DueDate < DateTime.Today;
+                                <div class="px-6 py-3 d-flex align-center hover-row pointer"
+                                     @onclick="@(() => NavigationManager.NavigateTo("/liabilities"))"
+                                     style="border-bottom: 1px solid var(--mud-palette-background-grey);">
+                                    <div class="flex-grow-1">
+                                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@liab.LenderName</MudText>
+                                        <MudText Typo="Typo.caption" Color="@(isOverdue ? Color.Error : Color.Secondary)">
+                                            @liab.Type â€” Due @liab.DueDate.ToString("dd MMM yyyy")@(isOverdue ? " âš ï¸ OVERDUE" : "")
+                                        </MudText>
+                                    </div>
+                                    <MudText Typo="Typo.body2" Color="Color.Error" Style="font-weight: 700;">
+                                        @liab.Currency @liab.CurrentAmount.ToString("N2")
+                                    </MudText>
+                                </div>
+                            }
+                            <div class="px-6 py-3 d-flex justify-space-between" style="background: var(--mud-palette-background-grey);">
+                                <MudText Typo="Typo.caption" Style="font-weight: 700;">TOTAL</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Error" Style="font-weight: 800;">
+                                    @Summary.TotalLiabilities.ToString("N2")
+                                </MudText>
+                            </div>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-6 rounded-xl h-100">
+                    <div class="d-flex justify-space-between align-center mb-6">
+                        <MudText Typo="Typo.h6" Style="font-weight: 700;">Budget Monitoring</MudText>
+                        <MudButton Href="/budgets" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Details</MudButton>
+                    </div>
+                    @if (!RecentBudgets.Any())
+                    {
+                        <div class="pa-8 text-center opacity-50">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.body2">No budgets set for this month.</MudText>
+                            <MudLink Href="/budgets" Underline="Underline.Hover">Set one up</MudLink>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var b in RecentBudgets.Take(6))
+                        {
+                            var color = b.PercentageUsed > 100 ? Color.Error : b.PercentageUsed > 80 ? Color.Warning : Color.Success;
+                            <div class="mb-4">
+                                <div class="d-flex justify-space-between mb-1">
+                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">@b.CategoryName</MudText>
+                                    <MudText Typo="Typo.caption" Color="color" Style="font-weight: 700;">@b.PercentageUsed.ToString("F0")%</MudText>
+                                </div>
+                                <MudProgressLinear Value="@b.PercentageUsed" Color="color" Size="Size.Small" Rounded="true" />
+                                <div class="d-flex justify-space-between mt-1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Spent: @b.SpentAmount.ToString("N0")</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Limit: @b.Amount.ToString("N0")</MudText>
+                                </div>
                             </div>
                         }
                     }
-                </div>
-            </MudPaper>
-        </MudItem>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
 
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-6 rounded-xl h-100">
-                <div class="d-flex justify-space-between align-center mb-6">
-                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Budget Monitoring</MudText>
-                    <MudButton Href="/budgets" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Details</MudButton>
-                </div>
-                @if (IsLoading)
-                {
-                    <MudSkeleton Width="100%" Height="20px" Class="mb-4" />
-                    <MudSkeleton Width="100%" Height="20px" Class="mb-4" />
-                }
-                else if (!RecentBudgets.Any())
-                {
-                    <div class="pa-8 text-center opacity-50">
-                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Class="mb-2" />
-                        <MudText Typo="Typo.body2">No budgets set for this month.</MudText>
-                        <MudLink Href="/budgets" Underline="Underline.Hover">Set one up</MudLink>
-                    </div>
-                }
-                else
-                {
-                    @foreach (var b in RecentBudgets.Take(5))
-                    {
-                        var color = b.PercentageUsed > 100 ? Color.Error : b.PercentageUsed > 80 ? Color.Warning : Color.Success;
-                        <div class="mb-4">
-                            <div class="d-flex justify-space-between mb-1">
-                                <MudText Typo="Typo.caption" Style="font-weight: 600;">@b.CategoryName</MudText>
-                                <MudText Typo="Typo.caption" Color="color" Style="font-weight: 700;">@b.PercentageUsed.ToString("F0")%</MudText>
-                            </div>
-                            <MudProgressLinear Value="@b.PercentageUsed" Color="color" Size="Size.Small" Rounded="true" />
-                            <div class="d-flex justify-space-between mt-1">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Spent: @b.SpentAmount.ToString("N0")</MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Limit: @b.Amount.ToString("N0")</MudText>
-                            </div>
+        <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 700; color: var(--mud-palette-primary);">Quick Actions</MudText>
+        <MudGrid>
+            <MudItem xs="6" sm="3">
+                <MudLink Href="/transaction" Underline="Underline.None">
+                    <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer">
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Primary" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">Transactions</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Record income/expense</MudText>
                         </div>
-                    }
-                }
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-
-    <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 700; color: var(--mud-palette-primary);">Quick Actions</MudText>
-    <MudGrid>
-        <MudItem xs="6" sm="3">
-            <MudLink Href="/liabilities/create" Underline="Underline.None">
-                <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer">
-                    <MudIcon Icon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="mr-3" />
+                    </MudPaper>
+                </MudLink>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudLink Href="/liabilities/create" Underline="Underline.None">
+                    <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Color="Color.Error" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">New Liability</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Record a debt</MudText>
+                        </div>
+                    </MudPaper>
+                </MudLink>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudLink Href="/loans" Underline="Underline.None">
+                    <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer">
+                        <MudIcon Icon="@Icons.Material.Filled.Handshake" Color="Color.Info" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">Loans Given</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Track IOUs</MudText>
+                        </div>
+                    </MudPaper>
+                </MudLink>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer" @onclick="RefreshData">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" Class="mr-3" />
                     <div>
-                        <MudText Typo="Typo.body2" Style="font-weight: 600;">New Liability</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Record debt</MudText>
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;">Refresh</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Update all figures</MudText>
                     </div>
                 </MudPaper>
-            </MudLink>
-        </MudItem>
-        <MudItem xs="6" sm="3">
-            <MudLink Href="/liabilities" Underline="Underline.None">
-                <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer">
-                    <MudIcon Icon="@Icons.Material.Filled.List" Color="Color.Success" Class="mr-3" />
-                    <div>
-                        <MudText Typo="Typo.body2" Style="font-weight: 600;">View All</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Manage all</MudText>
-                    </div>
-                </MudPaper>
-            </MudLink>
-        </MudItem>
-        <MudItem xs="6" sm="3">
-            <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center hover-card pointer" @onclick="RefreshData">
-                <MudIcon Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" Class="mr-3" />
-                <div>
-                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Refresh</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Update charts</MudText>
-                </div>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="6" sm="3">
-            <MudPaper Elevation="2" Class="pa-4 rounded-xl d-flex align-center opacity-50 grayscale">
-                <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Secondary" Class="mr-3" />
-                <div>
-                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Reports</MudText>
-                    <MudText Typo="Typo.caption">Coming soon</MudText>
-                </div>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+            </MudItem>
+        </MudGrid>
+    }
 
 </div>
 
 <style>
+    .nw-hero { color: white; }
+    .stat-card { transition: transform .2s, box-shadow .2s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--mud-elevation-6); }
     .hover-row:hover { background-color: var(--mud-palette-background-grey); }
     .hover-card:hover { transform: translateY(-2px); transition: transform 0.2s; box-shadow: var(--mud-elevation-4); }
     .pointer { cursor: pointer; }
+    .section-header { border-bottom: 1px solid var(--mud-palette-divider); }
+    .nw-table { width: 100%; border-collapse: collapse; }
+    .nw-table thead tr { background: var(--mud-palette-background-grey); }
+    .nw-table th, .nw-table td { padding: 10px 24px; font-size: .8125rem; }
+    .nw-table th { font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--mud-palette-text-secondary); text-align: left; }
+    .nw-table td { border-bottom: 1px solid var(--mud-palette-background-grey); }
+    .text-right { text-align: right; }
 </style>
 
 @code {
-    private List<Liability> Liabilities = new();
+    private NetWorthSummaryDTO?    Summary      = null;
     private List<BudgetDisplayDTO> RecentBudgets = new();
     private bool IsLoading = true;
 
-    private decimal TotalOriginal => Liabilities.Sum(l => l.OriginalAmount);
-    private decimal TotalCurrent  => Liabilities.Sum(l => l.CurrentAmount);
-    private decimal TotalPaidOff  => TotalOriginal - TotalCurrent;
-
-    private int OverallPayoffPct =>
-        TotalOriginal > 0
-            ? (int)Math.Clamp(TotalPaidOff / TotalOriginal * 100, 0, 100)
-            : 0;
-
-    private int     OverdueCount => Liabilities.Count(l => l.DueDate < DateTime.Today);
-    private decimal OverdueTotal => Liabilities.Where(l => l.DueDate < DateTime.Today).Sum(l => l.CurrentAmount);
+    // Chart Data
+    private double[] ChartData = new double[3];
+    private string[] ChartLabels = { "Liquid Cash", "Physical Assets", "Loans Given" };
+    public List<ChartSeries<double>> Series = new();
+    private int Index = -1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -220,15 +397,38 @@
         StateHasChanged();
         try
         {
-            await Task.Run(() =>
+            Summary       = await NetWorthService.GetNetWorthSummaryAsync();
+            RecentBudgets = await BudgetService.GetBudgetsWithUsageAsync(DateTime.Today.Month, DateTime.Today.Year);
+
+            if (Summary != null)
             {
-                Liabilities = LiabilityService.GetAllLiabilities();
-                RecentBudgets = BudgetService.GetBudgetsWithUsage(DateTime.Today.Month, DateTime.Today.Year);
-            });
+                // Prepare Donut Chart Data
+                ChartData = new double[] 
+                { 
+                    (double)Summary.TotalAccounts, 
+                    (double)Summary.TotalAssets, 
+                    (double)Summary.TotalLoansGiven 
+                };
+
+                // Prepare Bar Chart Data
+                Series.Clear();
+                Series.Add(new ChartSeries<double>() { Name = "Assets", Data = new double[] { (double)Summary.TotalValue } });
+                Series.Add(new ChartSeries<double>() { Name = "Liabilities", Data = new double[] { (double)Summary.TotalLiabilities } });
+                Series.Add(new ChartSeries<double>() { Name = "Net Worth", Data = new double[] { (double)Summary.NetWorth } });
+
+                // Fire budget warnings 
+                foreach (var budget in RecentBudgets.Where(b => b.PercentageUsed > 100))
+                {
+                    Snackbar.Add(
+                        $"âš ï¸  {budget.CategoryName} is over budget by {Math.Abs(budget.RemainingAmount):N2} " +
+                        $"({budget.PercentageUsed:F0}% used)",
+                        Severity.Warning,config => { config.VisibleStateDuration = 6000; });
+                }
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load data: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Failed to load dashboard: {ex.Message}", Severity.Error);
             Console.WriteLine($"DASHBOARD ERROR: {ex}");
         }
         finally

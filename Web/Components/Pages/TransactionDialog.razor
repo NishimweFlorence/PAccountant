@@ -15,7 +15,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <EditForm Model="@Model" OnValidSubmit="SubmitForm">
+        <EditForm Model="@Model" OnValidSubmit="SubmitForm" FormName="TransactionDialogForm">
             <DataAnnotationsValidator />
             <MudGrid Spacing="3">
                 <MudItem xs="12" sm="6">
@@ -29,21 +29,25 @@
                                Required="true">
                         @foreach (var cat in TransactionCategories)
                         {
-                            <MudSelectItem T="int" Value="@cat.Key">@cat.Value</MudSelectItem>
+                            <MudSelectItem T="int" Value="@cat.Id">@cat.Name</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudNumericField T="int"
-                                     @bind-Value="Model.AccountId"
-                                     Label="Account ID"
-                                     Variant="Variant.Outlined"
-                                     AdornmentIcon="@Icons.Material.Filled.AccountBalance"
-                                     Adornment="Adornment.Start"
-                                     AdornmentColor="Color.Secondary"
-                                     Min="1"
-                                     Required="true" />
+                    <MudSelect T="int"
+                               @bind-Value="Model.AccountId"
+                               Label="Account"
+                               Variant="Variant.Outlined"
+                               AdornmentIcon="@Icons.Material.Filled.AccountBalance"
+                               Adornment="Adornment.Start"
+                               AdornmentColor="Color.Secondary"
+                               Required="true">
+                        @foreach (var acc in Accounts)
+                        {
+                            <MudSelectItem T="int" Value="@acc.Id">@acc.Name (@acc.Balance @acc.Currency?.Symbol)</MudSelectItem>
+                        }
+                    </MudSelect>
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
@@ -99,10 +103,11 @@
     [Parameter] public CreateTransactionDTO Model { get; set; } = new();
     [Parameter] public bool IsEdit { get; set; }
     [Parameter] public int TransactionId { get; set; }
-    [Parameter] public Dictionary<int, string> TransactionCategories { get; set; } = new();
+    [Parameter] public List<TransactionCategory> TransactionCategories { get; set; } = new();
+    [Parameter] public List<Account> Accounts { get; set; } = new();
     [Parameter] public List<string> Currencies { get; set; } = new();
 
-    private void SubmitForm()
+    private async Task SubmitForm()
     {
         try
         {
@@ -117,13 +122,13 @@
                     TransactionDate = Model.TransactionDate,
                     CreatedAt = Model.CreatedAt
                 };
-                TransactionService.UpdateTransaction(TransactionId, updateDto);
+                await TransactionService.UpdateTransactionAsync(TransactionId, updateDto);
                 Snackbar.Add("Transaction updated successfully!", Severity.Success);
             }
             else
             {
                 Model.CreatedAt = DateTime.Now;
-                TransactionService.CreateTransaction(Model);
+                await TransactionService.CreateTransactionAsync(Model);
                 Snackbar.Add("Transaction created successfully!", Severity.Success);
             }
             DialogInstance.Close(DialogResult.Ok(true));
@@ -136,3 +141,4 @@
 
     private void Cancel() => DialogInstance.Cancel();
 }
+

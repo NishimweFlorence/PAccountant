@@ -1,6 +1,4 @@
-@using  Application.DTO
-@using System.ComponentModel.DataAnnotations
-@using Domain.Entities
+@using Application.DTO
 @using Application.Interfaces
 @using MudBlazor
 
@@ -10,53 +8,66 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            <MudIcon Icon="@(IsEdit ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-2 mb-n1" />
             @(IsEdit ? "Edit Asset" : "Add New Asset")
         </MudText>
     </TitleContent>
     <DialogContent>
-        <EditForm Model="@Model" OnValidSubmit="SubmitForm">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit" FormName="AssetDialogForm">
             <DataAnnotationsValidator />
             <MudGrid>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+                    <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Required="true" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Category" @bind-Value="Model.Category" For="@(() => Model.Category)" Variant="Variant.Outlined" />
+                    <MudTextField Label="Category" @bind-Value="Model.Category" For="@(() => Model.Category)" Required="true" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Current Value" @bind-Value="Model.CurrentValue" For="@(() => Model.CurrentValue)" Variant="Variant.Outlined" Format="N2" />
+                    <MudSelect T="string" Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Required="true" Variant="Variant.Outlined">
+                        @foreach (var c in Currencies)
+                        {
+                            <MudSelectItem Value="@c">@c</MudSelectItem>
+                        }
+                    </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Variant="Variant.Outlined" />
+                    <MudNumericField Label="Purchase Value" @bind-Value="Model.PurchaseValue" For="@(() => Model.PurchaseValue)" Format="N2" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudDatePicker Label="Purchase Date" 
-                                   Date="@Model.PurchaseDate" 
-                                   DateChanged="@((DateTime? d) => Model.PurchaseDate = d ?? DateTime.Today)" 
-                                   For="@(() => Model.PurchaseDate)" 
-                                   Variant="Variant.Outlined" />
+                    <MudNumericField Label="Current Value" @bind-Value="Model.CurrentValue" For="@(() => Model.CurrentValue)" Format="N2" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Purchase Value" @bind-Value="Model.PurchaseValue" For="@(() => Model.PurchaseValue)" Variant="Variant.Outlined" Format="N2" />
+                    <MudDatePicker Label="Purchase Date" @bind-Date="NullablePurchaseDate" Variant="Variant.Outlined" />
                 </MudItem>
             </MudGrid>
         </EditForm>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitForm">@(IsEdit ? "Update Asset" : "Add Asset")</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Update" : "Create")</MudButton>
     </DialogActions>
 </MudDialog>
 
-@code{
-    [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
 
-    [Parameter] public AssetCreateDTO Model { get; set; } = new();
-    [Parameter] public bool IsEdit { get; set; }
-    [Parameter] public int AssetId { get; set; }
+    [Parameter] public AssetCreateDTO Model { get; set; } = new() { PurchaseDate = DateTime.Today, CreatedAt = DateTime.UtcNow };
+    [Parameter] public bool IsEdit { get; set; } = false;
+    [Parameter] public int AssetId { get; set; } = 0;
 
-    private void SubmitForm()
+    private List<string> Currencies = new() { "RWF", "USD", "EUR" };
+
+    private DateTime? NullablePurchaseDate
+    {
+        get => Model.PurchaseDate == default ? DateTime.Today : Model.PurchaseDate;
+        set => Model.PurchaseDate = value ?? DateTime.Today;
+    }
+
+    private void Submit()
+    {
+        OnValidSubmit();
+    }
+
+    private async void OnValidSubmit()
     {
         try
         {
@@ -66,28 +77,27 @@
                 {
                     Name = Model.Name,
                     Category = Model.Category,
-                    CurrentValue = Model.CurrentValue,
-                    PurchaseValue = Model.PurchaseValue,
-                    PurchaseDate = Model.PurchaseDate,
                     Currency = Model.Currency,
+                    PurchaseValue = Model.PurchaseValue,
+                    CurrentValue = Model.CurrentValue,
+                    PurchaseDate = Model.PurchaseDate,
                     CreatedAt = Model.CreatedAt
                 };
-                AssetService.UpdateAsset(AssetId, updateDto);
-                Snackbar.Add("Asset updated successfully!", Severity.Success);
+                await AssetService.UpdateAssetAsync(AssetId, updateDto);
+                Snackbar.Add("Asset updated successfully", Severity.Success);
             }
             else
             {
-                Model.CreatedAt = DateTime.Now;
-                AssetService.CreateAsset(Model);
-                Snackbar.Add("Asset created successfully!", Severity.Success);
+                await AssetService.CreateAssetAsync(Model);
+                Snackbar.Add("Asset created successfully", Severity.Success);
             }
-            DialogInstance.Close(DialogResult.Ok(true));
+            MudDialog?.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving asset: {ex.Message}", Severity.Error);
         }
     }
 
-    private void Cancel() => DialogInstance.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
 }

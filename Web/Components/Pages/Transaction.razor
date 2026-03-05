@@ -2,10 +2,13 @@
 @using Application.Services.Transactions
 @using Application.Interfaces
 @using Application.DTO
+@using Domain.Entities
 @using TransactionEntity = Domain.Entities.Transaction
 @rendermode InteractiveServer
 
 @inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject ITransactionCategoryService TransactionCategoryService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
@@ -48,7 +51,7 @@
 <MudPaper Class="pa-3 mb-4" Elevation="1">
     <MudGrid>
         <MudItem xs="12" md="4">
-            <MudTextField @bind-Value="SearchTerm" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="SearchTerm" Placeholder="Search accounts, categories..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
         </MudItem>
         <MudItem xs="12" md="4">
             <MudSelect T="string" Value="@FilterCurrency" ValueChanged="@((string v) => FilterCurrency = v ?? string.Empty)" Label="Currency" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
@@ -72,10 +75,14 @@
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ID">#@context.Id</MudTd>
-            <MudTd DataLabel="Category"><MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">@GetCategoryName(context.IdTransactionCategory)</MudChip></MudTd>
-            <MudTd DataLabel="Account">@context.AccountId</MudTd>
+            <MudTd DataLabel="Category">
+                <MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">
+                    @(context.Category?.Name ?? "N/A")
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Account">@(context.Account?.Name ?? context.AccountId.ToString())</MudTd>
             <MudTd DataLabel="Amount"><MudText Color="Color.Primary">@context.Amount.ToString("N2")</MudText></MudTd>
-            <MudTd DataLabel="Currency">@context.Currency</MudTd>
+            <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
             <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(() => NavigationManager.NavigateTo($"/transactions/{context.Id}"))" />
@@ -89,33 +96,67 @@
 
 @code {
     private List<TransactionEntity> TransactionList = new();
+    private List<Account> Accounts = new();
+    private List<TransactionCategory> TransactionCategories = new();
     private bool IsLoading = true;
     private string SearchTerm = string.Empty;
     private string FilterCurrency = string.Empty;
-    private List<string> Currencies = new() { "Frw", "USD", "EUR", "GBP", "KES", "UGX", "TZS", "ZAR", "NGN", "GHS" };
-    private Dictionary<int, string> TransactionCategories = new() { { 1, "Income" }, { 2, "Expense" }, { 3, "Transfer" }, { 4, "Savings" }, { 5, "Investment" }, { 6, "Loan Payment" }, { 7, "Other" } };
+    private List<string> Currencies = new() { "RWF", "USD", "EUR" };
 
     private decimal TotalAmount => TransactionList.Sum(t => t.Amount);
     private int ThisMonthCount => TransactionList.Count(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year);
     private decimal ThisMonthAmount => TransactionList.Where(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year).Sum(t => t.Amount);
 
-    private IEnumerable<TransactionEntity> FilteredTransactions => TransactionList.Where(t => (string.IsNullOrWhiteSpace(SearchTerm) || t.AccountId.ToString().Contains(SearchTerm) || GetCategoryName(t.IdTransactionCategory).Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) && (string.IsNullOrWhiteSpace(FilterCurrency) || t.Currency == FilterCurrency));
+    private IEnumerable<TransactionEntity> FilteredTransactions => TransactionList.Where(t => 
+        (string.IsNullOrWhiteSpace(SearchTerm) || 
+         (t.Account?.Name?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) || 
+         (t.Category?.Name?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)) && 
+        (string.IsNullOrWhiteSpace(FilterCurrency) || t.Currency?.Code == FilterCurrency));
 
-    protected override async Task OnInitializedAsync() { await LoadTransactions(); }
+    protected override async Task OnInitializedAsync() { await LoadData(); }
 
-    private async Task LoadTransactions()
+    private async Task LoadData()
     {
         IsLoading = true;
-        try { TransactionList = TransactionService.GetAllTransactions(); }
-        catch (Exception ex) { Snackbar.Add("Error loading transactions", Severity.Error); }
+        try 
+        { 
+            TransactionList = await TransactionService.GetAllTransactionsAsync();
+            Accounts = await AccountService.GetAllAccountsAsync();
+            TransactionCategories = await TransactionCategoryService.GetAllTransactionCategoriesAsync();
+        }
+        catch (Exception ex) { Snackbar.Add("Error loading data", Severity.Error); }
         finally { IsLoading = false; }
+    }
+
+    private async Task LoadCategories()
+    {
+        IsLoading = true;
+        try
+        {
+            TransactionCategories = await TransactionCategoryService.GetAllTransactionCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading categories: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task OpenCreateDialog()
     {
-        var parameters = new DialogParameters<TransactionDialog> { { x => x.Model, new CreateTransactionDTO { TransactionDate = DateTime.Today } }, { x => x.IsEdit, false }, { x => x.TransactionCategories, TransactionCategories }, { x => x.Currencies, Currencies } };
+        var parameters = new DialogParameters<TransactionDialog> 
+        { 
+            { x => x.Model, new CreateTransactionDTO { TransactionDate = DateTime.Today, Currency = "RWF" } }, 
+            { x => x.IsEdit, false }, 
+            { x => x.TransactionCategories, TransactionCategories }, 
+            { x => x.Accounts, Accounts },
+            { x => x.Currencies, Currencies } 
+        };
         var dialog = await DialogService.ShowAsync<TransactionDialog>("New Transaction", parameters);
-        if (!(await dialog.Result).Canceled) await LoadTransactions();
+        if (!(await dialog.Result).Canceled) await LoadData();
     }
 
     private async Task OpenEditDialog(TransactionEntity t)
@@ -125,17 +166,18 @@
                 IdTransactionCategory = t.IdTransactionCategory, 
                 AccountId = t.AccountId, 
                 Amount = t.Amount, 
-                Currency = t.Currency, 
+                Currency = t.Currency?.Code ?? "RWF", 
                 TransactionDate = t.TransactionDate, 
                 CreatedAt = t.CreatedAt 
             } }, 
             { x => x.IsEdit, true }, 
             { x => x.TransactionId, t.Id }, 
             { x => x.TransactionCategories, TransactionCategories }, 
+            { x => x.Accounts, Accounts },
             { x => x.Currencies, Currencies } 
         };
         var dialog = await DialogService.ShowAsync<TransactionDialog>("Edit Transaction", parameters);
-        if (!(await dialog.Result).Canceled) await LoadTransactions();
+        if (!(await dialog.Result).Canceled) await LoadData();
     }
 
     private async Task OpenDeleteConfirmation(TransactionEntity t)
@@ -144,6 +186,5 @@
         if (confirmed) { Snackbar.Add("Delete feature coming soon", Severity.Info); }
     }
 
-    private string GetCategoryName(int id) => TransactionCategories.TryGetValue(id, out var name) ? name : $"Category {id}";
     private Color GetCategoryColor(int id) => id switch { 1 => Color.Success, 2 => Color.Error, 3 => Color.Info, 4 => Color.Tertiary, 5 => Color.Primary, 6 => Color.Warning, _ => Color.Default };
 }

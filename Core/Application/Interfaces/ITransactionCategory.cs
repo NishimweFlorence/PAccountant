@@ -7,11 +7,9 @@ namespace Application.Interfaces
 {
     public interface ITransactionCategory
     {
-        public List<TransactionCategory> GetAllTransactionCategories();
-
-        public TransactionCategory GetTransactionCategoryById(int id);
-
-        void CreateTransactionCategory(TransactionCategoryCreateDTO transactionCategoryCreateDTO);
-        void UpdateTransactionCategory(int id,TransactionCategoryUpdateDTO transactionCategoryUpdateDTO);
+        Task<List<TransactionCategory>> GetAllTransactionCategoriesAsync();
+        Task<TransactionCategory?> GetTransactionCategoryByIdAsync(int id);
+        Task CreateTransactionCategoryAsync(TransactionCategoryCreateDTO transactionCategoryCreateDTO);
+        Task UpdateTransactionCategoryAsync(int id, TransactionCategoryUpdateDTO transactionCategoryUpdateDTO);
     }
 }

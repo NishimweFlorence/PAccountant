@@ -1,5 +1,5 @@
-using Domain.Entities;
 using Application.DTO;
+using Domain.Entities;
 
 namespace Application.Interfaces
 {
@@ -7,8 +7,8 @@ namespace Application.Interfaces
     {
         List<User> GetUsers();
         User? GetUserById(int id);
-        void CreateUser(UserCreateDTO userDto);
         User? ValidateUser(UserLoginDTO loginDto);
+        void CreateUser(UserCreateDTO userDto);
         void UpdateUser(int id, UserUpdateDTO userDto);
         void DeleteUser(UserDeleteDTO dto);
     }

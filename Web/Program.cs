@@ -14,6 +14,8 @@ using Application.Services.TransactionCategories;
 using Infrastructure.Auth;
 using Microsoft.AspNetCore.Components.Authorization;
 using Application.Services.Users;
+using Application.Services.Budgets;
+using Application.Services.NetWorth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +25,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 // Database connection
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CRMDemoSQLConnection")));
+// (Registered in InfrastructureServices)
 
 // Services implementation
 builder.Services.AddScoped<ILiabilityService, LiabilityService>();
@@ -35,6 +36,8 @@ builder.Services.AddScoped<ILoanRepaymentService, LoanRepaymentService>();
 builder.Services.AddScoped<ITransactionCategoryService, TransactionCategoryService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<INetWorthService, NetWorthService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();

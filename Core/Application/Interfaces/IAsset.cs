@@ -1,4 +1,4 @@
-using Application.DTO;
+﻿using Application.DTO;
 using Application.Interfaces;
 using Domain.Entities;
 
@@ -7,11 +7,10 @@ namespace Application.Interfaces
 {
     public interface IAsset
     {
-        public List<Asset> GetAllAssets();
-
-        public Asset GetAssetById(int id);
-
-        void CreateAsset(AssetCreateDTO assetCreateDTO);
-        void UpdateAsset(int id,AssetUpdateDTO assetUpdateDTO);
+        Task<List<Asset>> GetAllAssetsAsync();
+        Task<Asset> GetAssetByIdAsync(int id);
+        Task CreateAssetAsync(AssetCreateDTO assetCreateDTO);
+        Task UpdateAssetAsync(int id, AssetUpdateDTO assetUpdateDTO);
+        Task DeleteAssetAsync(int id);
     }
 }

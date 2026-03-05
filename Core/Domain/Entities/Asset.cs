@@ -1,16 +1,16 @@
+using Domain.ValueObjects;
+
 namespace Domain.Entities
 {
     public class Asset
     {
         public int Id { get; set; }
-        public String Name { get; set; }
-        public string Category { get; set; }
-        public string Currency { get; set; }
-         public Decimal PurchaseValue { get; set; }
-         public Decimal CurrentValue { get; set; }
-        public DateTime  PurchaseDate { get; set; }
-        public  DateTime  CreatedAt { get; set; }
-
-
+        public string Name { get; set; } = null!;
+        public string Category { get; set; } = null!;
+        public Currency Currency { get; set; } = null!;
+        public decimal PurchaseValue { get; set; }
+        public decimal CurrentValue { get; set; }
+        public DateTime PurchaseDate { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

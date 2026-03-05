@@ -4,6 +4,7 @@ namespace Application.DTO
     {
         public int Id { get; set; }
         public int LoanId { get; set; }
+        public int AccountId { get; set; }
         public decimal Amount { get; set; }
         public DateTime? RepaymentDate { get; set; }
         public string Note { get; set; }
@@ -13,6 +14,7 @@ namespace Application.DTO
     {
         public int Id { get; set; }
         public int LoanId { get; set; }
+        public int AccountId { get; set; }
         public decimal Amount { get; set; }
         public DateTime? RepaymentDate { get; set; }
         public string Note { get; set; }

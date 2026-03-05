@@ -17,27 +17,25 @@ namespace Application.Services.TransactionCategories
             _transactionCategory = transactionCategory;
         }
         
-            public List<TransactionCategory> GetAllTransactionCategories()
-            
-            {
-                List<TransactionCategory> transactionCategories = _transactionCategory.GetAllTransactionCategories();
-               return transactionCategories;
-            }
+        public async Task<List<TransactionCategory>> GetAllTransactionCategoriesAsync()
+        {
+            return await _transactionCategory.GetAllTransactionCategoriesAsync();
+        }
 
-            public TransactionCategory GetTransactionCategoryById(int id)
-            {
-               return _transactionCategory.GetTransactionCategoryById(id);
-            }   
+        public async Task<TransactionCategory?> GetTransactionCategoryByIdAsync(int id)
+        {
+            return await _transactionCategory.GetTransactionCategoryByIdAsync(id);
+        }   
 
-            public void CreateTransactionCategory(TransactionCategoryCreateDTO transactionCategoryDTO)
-            {  
-              _transactionCategory.CreateTransactionCategory(transactionCategoryDTO);
-            }
+        public async Task CreateTransactionCategoryAsync(TransactionCategoryCreateDTO transactionCategoryDTO)
+        {  
+            await _transactionCategory.CreateTransactionCategoryAsync(transactionCategoryDTO);
+        }
 
-            public void UpdateTransactionCategory(int id, TransactionCategoryUpdateDTO transactionCategoryDTO)
-            {
-               _transactionCategory.UpdateTransactionCategory(id, transactionCategoryDTO);
-            }
+        public async Task UpdateTransactionCategoryAsync(int id, TransactionCategoryUpdateDTO transactionCategoryDTO)
+        {
+            await _transactionCategory.UpdateTransactionCategoryAsync(id, transactionCategoryDTO);
+        }
                 
     }
 }

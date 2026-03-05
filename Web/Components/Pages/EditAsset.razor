@@ -49,9 +49,9 @@
 
     private AssetUpdateDTO Model {get;set;} = new ();
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        var asset = AssetService.GetAssetById(Id);
+        var asset = await AssetService.GetAssetByIdAsync(Id);
         if (asset != null)
         {
             Model = new AssetUpdateDTO
@@ -62,14 +62,14 @@
                 PurchaseValue= asset.PurchaseValue,
                 PurchaseDate = asset.PurchaseDate,
                 CreatedAt = asset.CreatedAt,
-                Currency = asset.Currency ?? "",
+                Currency = asset.Currency?.Code ?? "RWF",
             };
         }
     }
-    private void onValidSubmit()
+    private async Task onValidSubmit()
     {
         if (Model == null) return;
-        AssetService.UpdateAsset(Id, Model);
+        await AssetService.UpdateAssetAsync(Id, Model);
         Navigation.NavigateTo("/assets");
     }
 }

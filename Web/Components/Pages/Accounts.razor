@@ -31,8 +31,8 @@
         <RowTemplate>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Balance">@context.balance?.ToString("N2")</MudTd>
-            <MudTd DataLabel="Currency">@context.Currency</MudTd>
+            <MudTd DataLabel="Balance">@context.Balance?.ToString("N2")</MudTd>
+            <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
             <MudTd DataLabel="Status">
                 <MudChip T="string" Size="Size.Small" Color="@(context.Status == "Active" ? Color.Success : Color.Default)">@context.Status</MudChip>
             </MudTd>
@@ -59,7 +59,7 @@
         loading = true;
         try
         {
-            accounts = AccountService.GetAllAccounts();
+            accounts = await AccountService.GetAllAccountsAsync();
         }
         catch (Exception ex)
         {
@@ -95,8 +95,8 @@
             { x => x.Model, new AccountCreateDTO { 
                 Name = account.Name, 
                 Type = account.Type, 
-                balance = account.balance ?? 0, 
-                Currency = account.Currency, 
+                Balance = account.Balance.GetValueOrDefault(), 
+                Currency = account.Currency?.Code ?? "RWF", 
                 Status = account.Status 
             } },
             { x => x.IsEdit, true },

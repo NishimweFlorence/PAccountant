@@ -2,6 +2,8 @@ using Application.DTO;
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Domain.ValueObjects;
 
 namespace Infrastructure.Repositories 
 {
@@ -16,53 +18,55 @@ namespace Infrastructure.Repositories
 
       //Retrieving Assets
 
-      public List<Asset> GetAllAssets()
+        public async Task<List<Asset>> GetAllAssetsAsync()
         {
-           List<Asset> Assets = _dbContext.Assets.ToList();
-              return Assets;
-             
+            return await _dbContext.Assets.ToListAsync();
         }
 
-        public Asset GetAssetById(int id)
+        public async Task<Asset> GetAssetByIdAsync(int id)
         {
-            return _dbContext.Assets.FirstOrDefault(c => c.Id == id);
+            return await _dbContext.Assets.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public void CreateAsset(AssetCreateDTO assetCreateDTO)
+        public async Task CreateAssetAsync(AssetCreateDTO assetCreateDTO)
         {
             Asset asset = new()
             {
                 Name = assetCreateDTO.Name,
                 Category = assetCreateDTO.Category,
                 PurchaseDate = assetCreateDTO.PurchaseDate,
-                Currency = assetCreateDTO.Currency,
+                Currency = Currency.FromCode(assetCreateDTO.Currency),
                 PurchaseValue = assetCreateDTO.PurchaseValue,
-                 CurrentValue= assetCreateDTO.CurrentValue,
+                CurrentValue = assetCreateDTO.CurrentValue,
                 CreatedAt = DateTime.UtcNow,
-                
-            
             };
             _dbContext.Assets.Add(asset);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
-    
 
-    public void UpdateAsset(int id, AssetUpdateDTO assetUpdateDTO)
+        public async Task UpdateAssetAsync(int id, AssetUpdateDTO assetUpdateDTO)
         {
-            var asset = _dbContext.Assets.Find(id);
+            var asset = await _dbContext.Assets.FindAsync(id);
             if (asset == null) return;
+
+            asset.Name = assetUpdateDTO.Name;
+            asset.Category = assetUpdateDTO.Category;
+            asset.PurchaseDate = assetUpdateDTO.PurchaseDate;
+            asset.Currency = Currency.FromCode(assetUpdateDTO.Currency);
+            asset.PurchaseValue = assetUpdateDTO.PurchaseValue;
+            asset.CurrentValue = assetUpdateDTO.CurrentValue;
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task DeleteAssetAsync(int id)
+        {
+            var asset = await _dbContext.Assets.FindAsync(id);
+            if (asset != null)
             {
-                asset.Name = assetUpdateDTO.Name;
-                asset.Category = assetUpdateDTO.Category;
-                asset.PurchaseDate = assetUpdateDTO.PurchaseDate;
-                asset.Currency = assetUpdateDTO.Currency;
-                asset.PurchaseValue = assetUpdateDTO.PurchaseValue;
-                asset.CurrentValue = assetUpdateDTO.CurrentValue;
-                _dbContext.SaveChanges();
+                _dbContext.Assets.Remove(asset);
+                await _dbContext.SaveChangesAsync();
             }
         }
-
-
     }
     
 }

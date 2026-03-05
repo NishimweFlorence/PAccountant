@@ -1,9 +1,7 @@
 @page "/register"
 @using Microsoft.AspNetCore.Authorization
 @attribute [AllowAnonymous]
-
 @layout AuthLayout
-
 @inject IUserService UserService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -12,7 +10,7 @@
     <MudPaper Class="pa-8" Elevation="4">
         <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Register</MudText>
         
-        <EditForm Model="@registerModel" OnValidSubmit="OnValidSubmit">
+        <EditForm Model="@registerModel" OnValidSubmit="OnValidSubmit" FormName="RegisterForm">
             <DataAnnotationsValidator />
             
             <MudTextField Label="First Name" @bind-Value="registerModel.FirstName" For="@(() => registerModel.FirstName)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
@@ -30,7 +28,8 @@
 </MudContainer>
 
 @code {
-    private UserCreateDTO registerModel = new UserCreateDTO { FirstName = "", LastName = "", Email = "", Password = "" };
+    [SupplyParameterFromForm(FormName = "RegisterForm")]                          
+    private UserCreateDTO registerModel { get; set; } = new UserCreateDTO { FirstName = "", LastName = "", Email = "", Password = "" };
 
     private void OnValidSubmit()
     {

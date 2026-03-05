@@ -15,7 +15,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <EditForm Model="@Model" OnValidSubmit="SubmitForm">
+        <EditForm Model="@Model" OnValidSubmit="SubmitForm" FormName="AccountDialogForm">
             <DataAnnotationsValidator />
             <MudGrid>
                 <MudItem xs="12" md="6">
@@ -25,12 +25,17 @@
                     <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Balance" @bind-Value="Model.balance" For="@(() => Model.balance)" Variant="Variant.Outlined" Format="N2" />
+                    <MudNumericField Label="Balance" @bind-Value="Model.Balance" For="@(() => Model.Balance)" Variant="Variant.Outlined" Format="N2" />
                 </MudItem>
                 @if (!IsEdit)
                 {
                     <MudItem xs="12" md="6">
-                        <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Variant="Variant.Outlined" />
+                        <MudSelect T="string" Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Variant="Variant.Outlined" Required="true">
+                            @foreach (var c in Currencies)
+                            {
+                                <MudSelectItem Value="@c">@c</MudSelectItem>
+                            }
+                        </MudSelect>
                     </MudItem>
                 }
                 <MudItem xs="12">
@@ -48,11 +53,13 @@
 @code{
     [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
 
-    [Parameter] public AccountCreateDTO Model { get; set; } = new();
+    [Parameter] public AccountCreateDTO Model { get; set; } = new() { Currency = "RWF" };
     [Parameter] public bool IsEdit { get; set; }
     [Parameter] public int AccountId { get; set; }
 
-    private void SubmitForm()
+    private List<string> Currencies = new() { "RWF", "USD", "EUR" };
+
+    private async Task SubmitForm()
     {
         try
         {
@@ -62,15 +69,15 @@
                 {
                     Name = Model.Name,
                     Type = Model.Type,
-                    balance = Model.balance,
+                    Balance = Model.Balance,
                     Status = Model.Status
                 };
-                AccountService.UpdateAccount(AccountId, updateDto);
+                await AccountService.UpdateAccountAsync(AccountId, updateDto);
                 Snackbar.Add("Account updated successfully!", Severity.Success);
             }
             else
             {
-                AccountService.CreateAccount(Model);
+                await AccountService.CreateAccountAsync(Model);
                 Snackbar.Add("Account created successfully!", Severity.Success);
             }
             DialogInstance.Close(DialogResult.Ok(true));

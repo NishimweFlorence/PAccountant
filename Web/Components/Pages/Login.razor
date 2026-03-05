@@ -13,7 +13,7 @@
     <MudPaper Class="pa-8" Elevation="4">
         <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Login</MudText>
         
-        <EditForm Model="@loginModel" OnValidSubmit="OnValidSubmit">
+        <EditForm Model="@loginModel" OnValidSubmit="OnValidSubmit" FormName="LoginForm">
             <DataAnnotationsValidator />
             
             <MudTextField Label="Email" @bind-Value="loginModel.Email" For="@(() => loginModel.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
@@ -29,7 +29,8 @@
 </MudContainer>
 
 @code {
-    private UserLoginDTO loginModel = new UserLoginDTO { Email = "", Password = "" };
+    [SupplyParameterFromForm(FormName = "LoginForm")]                           
+    private UserLoginDTO loginModel { get; set; } = new UserLoginDTO { Email = "", Password = "" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,13 +39,13 @@
 
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-            NavigationManager.NavigateTo("/Dashboard");
+            NavigationManager.NavigateTo("/dashboard");
         }
     }
 
     private async Task OnValidSubmit()
     {
-        var user = UserService.ValidateUser(loginModel);
+        var user =  UserService.ValidateUser(loginModel); 
         if (user != null)
         {
             var customAuthStateProvider = (CustomAuthenticationStateProvider)AuthStateProvider;
@@ -55,7 +56,7 @@
                 FirstName = user.FirstName,
                 LastName = user.LastName
             });
-            NavigationManager.NavigateTo("/Dashboard");
+            NavigationManager.NavigateTo("/dashboard");
         }
         else
         {

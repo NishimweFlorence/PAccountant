@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTO
 {
@@ -12,7 +12,7 @@ namespace Application.DTO
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
         [Required]
-        [MinLength(6)]
+        [MinLength(5)]
         public string Password { get; set; } = string.Empty;
     }
 

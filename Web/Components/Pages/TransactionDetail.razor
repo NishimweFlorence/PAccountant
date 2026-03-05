@@ -45,8 +45,8 @@
     [Parameter] public int Id { get; set; }
     public TransactionEntity? transaction;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        transaction = TransactionService.GetTransactionById(Id);
+        transaction = await TransactionService.GetTransactionByIdAsync(Id);
     }
 }

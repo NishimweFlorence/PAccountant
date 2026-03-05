@@ -42,8 +42,8 @@
     [Parameter] public int Id { get; set; }
     public TransactionCategory? transactionCategory;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        transactionCategory = TransactionCategoryService.GetTransactionCategoryById(Id);
+        transactionCategory = await TransactionCategoryService.GetTransactionCategoryByIdAsync(Id);
     }
 }

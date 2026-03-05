@@ -1,4 +1,3 @@
-﻿using System.Security.Cryptography.X509Certificates;
 using Application.Interfaces;
 using Domain.Entities;
 using Application.DTO;
@@ -6,40 +5,34 @@ using Application.DTO;
 
 namespace Application.Services.Assets
 {
-    
     public class AssetService : IAssetService
     {
         private readonly IAsset _asset;
 
-        //Constructor
         public AssetService(IAsset asset)
         {
             _asset = asset;
         }
-        
-        public async Task<List<Asset>> GetAllAssetsAsync()
+
+        public List<Asset> GetAllAssets()
         {
-            return await _asset.GetAllAssetsAsync();
+            List<Asset> assets = _asset.GetAllAssets();
+            return assets;
         }
 
-        public async Task<Asset> GetAssetByIdAsync(int id)
+        public Asset GetAssetById(int id)
         {
-            return await _asset.GetAssetByIdAsync(id);
+            return _asset.GetAssetById(id);
         }
 
-        public async Task CreateAssetAsync(AssetCreateDTO assetDTO)
+        public void CreateAsset(AssetCreateDTO assetDTO)
         {
-            await _asset.CreateAssetAsync(assetDTO);
+            _asset.CreateAsset(assetDTO);
         }
 
-        public async Task UpdateAssetAsync(int id, AssetUpdateDTO assetUpdateDTO)
+        public void UpdateAsset(int id, AssetUpdateDTO assetUpdateDTO)
         {
-            await _asset.UpdateAssetAsync(id, assetUpdateDTO);
-        }
-
-        public async Task DeleteAssetAsync(int id)
-        {
-            await _asset.DeleteAssetAsync(id);
+            _asset.UpdateAsset(id, assetUpdateDTO);
         }
     }
 }

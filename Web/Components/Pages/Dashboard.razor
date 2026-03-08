@@ -9,21 +9,17 @@
 @inject ISnackbar         Snackbar
 @inject NavigationManager NavigationManager
 
-<PageTitle>Dashboard â€” PAccountant</PageTitle>
+<PageTitle>Dashboard — PAccountant</PageTitle>
 
-<div class="pa-4">
-
-    <div class="d-flex justify-space-between align-end mb-8 pb-4"
-         style="border-bottom: 1px solid var(--mud-palette-divider);">
-        <div>
-            <MudText Typo="Typo.h3" Color="Color.Primary" Style="font-weight: 800;">PAccountant</MudText>
-            <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="mt-1">Personal Finance Dashboard</MudText>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudPaper Elevation="0" Class="pa-4 transparent-bg">
+        <div class="d-flex align-center justify-space-between mb-8 pb-4" style="border-bottom: 1px solid var(--mud-palette-divider);">
+            <div>
+                <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 800;">Dashboard</MudText>
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@DateTime.Now.ToString("dddd, dd MMM yyyy")</MudText>
+            </div>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RefreshData">Refresh Data</MudButton>
         </div>
-        <div class="text-right">
-            <MudText Typo="Typo.h6" Color="Color.Primary" Style="font-weight: 700;">@DateTime.Now.ToString("dd MMM yyyy")</MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">@DateTime.Now.ToString("dddd")</MudText>
-        </div>
-    </div>
 
     @if (IsLoading)
     {
@@ -357,7 +353,8 @@
         </MudGrid>
     }
 
-</div>
+    </MudPaper>
+</MudContainer>
 
 <style>
     .nw-hero { color: white; }

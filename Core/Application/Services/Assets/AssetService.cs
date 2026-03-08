@@ -14,25 +14,29 @@ namespace Application.Services.Assets
             _asset = asset;
         }
 
-        public List<Asset> GetAllAssets()
+        public async Task<List<Asset>> GetAllAssetsAsync()
         {
-            List<Asset> assets = _asset.GetAllAssets();
-            return assets;
+            return await _asset.GetAllAssetsAsync();
         }
 
-        public Asset GetAssetById(int id)
+        public async Task<Asset> GetAssetByIdAsync(int id)
         {
-            return _asset.GetAssetById(id);
+            return await _asset.GetAssetByIdAsync(id);
         }
 
-        public void CreateAsset(AssetCreateDTO assetDTO)
+        public async Task CreateAssetAsync(AssetCreateDTO assetDTO)
         {
-            _asset.CreateAsset(assetDTO);
+            await _asset.CreateAssetAsync(assetDTO);
         }
 
-        public void UpdateAsset(int id, AssetUpdateDTO assetUpdateDTO)
+        public async Task UpdateAssetAsync(int id, AssetUpdateDTO assetUpdateDTO)
         {
-            _asset.UpdateAsset(id, assetUpdateDTO);
+            await _asset.UpdateAssetAsync(id, assetUpdateDTO);
+        }
+
+        public async Task DeleteAssetAsync(int id)
+        {
+            await _asset.DeleteAssetAsync(id);
         }
     }
 }

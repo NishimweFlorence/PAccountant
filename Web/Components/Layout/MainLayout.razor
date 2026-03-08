@@ -11,7 +11,7 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1">
+    <MudAppBar Elevation="1" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h6" Class="ml-3">PAccountant</MudText>
         <MudSpacer />
@@ -19,9 +19,28 @@
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleDarkMode" />
 
         <AuthorizeView>
-            <Authorized>
-                <MudText Typo="Typo.body1" Class="ml-4">Hello, @context.User.Identity?.Name</MudText>
-                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" Class="ml-2" />
+            <Authorized Context="authState">
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-4">
+                    <ActivatorContent>
+                        <div class="d-flex align-center cursor-pointer">
+                            <MudText Typo="Typo.body1" Class="mr-3 d-none d-sm-block">@authState.User.Claims.FirstOrDefault(c => c.Type == "FirstName")?.Value</MudText>
+                            <MudAvatar Color="Color.Secondary" Size="Size.Medium">
+                                @if (!string.IsNullOrEmpty(authState.User.Claims.FirstOrDefault(c => c.Type == "ProfilePictureUrl")?.Value))
+                                {
+                                    <MudImage Src="@authState.User.Claims.FirstOrDefault(c => c.Type == "ProfilePictureUrl")?.Value" />
+                                }
+                                else
+                                {
+                                    @($"{authState.User.Claims.FirstOrDefault(c => c.Type == "FirstName")?.Value?[0]}{authState.User.Claims.FirstOrDefault(c => c.Type == "LastName")?.Value?[0]}")
+                                }
+                            </MudAvatar>
+                        </div>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick="@(() => NavigationManager.NavigateTo("/profile"))">My Profile</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Logout</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
             </Authorized>
             <NotAuthorized>
                 <MudLink Href="/login" Color="Color.Inherit" Class="ml-4">Login</MudLink>
@@ -29,7 +48,7 @@
         </AuthorizeView>
     </MudAppBar>
 
-    <MudDrawer @bind-Open="@_drawerOpen" Elevation="2">
+    <MudDrawer @bind-Open="@_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
         <NavMenu />
     </MudDrawer>
 
@@ -55,25 +74,27 @@
     {
         PaletteLight = new PaletteLight()
         {
-            Primary = Colors.Blue.Default,
-            Secondary = Colors.Blue.Lighten1,
-            AppbarBackground = Colors.Blue.Default,
+            Primary = "#1E88E5",
+            Secondary = "#42A5F5",
+            AppbarBackground = "#1E88E5",
             AppbarText = Colors.Shades.White,
-            Background = Colors.Shades.White,
+            Background = "#F5F7F9",
             DrawerBackground = Colors.Shades.White,
-            TextPrimary = Colors.BlueGray.Darken4
+            TextPrimary = "#2C3E50",
+            Surface = Colors.Shades.White
         },
         PaletteDark = new PaletteDark()
         {
-            Primary = Colors.Blue.Lighten1,
-            Background = "#0A192F",
-            Surface = "#112240",
-            DrawerBackground = "#112240",
-            AppbarBackground = "#112240"
+            Primary = "#42A5F5",
+            Background = "#0F172A",
+            Surface = "#1E293B",
+            DrawerBackground = "#1E293B",
+            AppbarBackground = "#1E293B",
+            TextPrimary = "#F8FAFC"
         },
         LayoutProperties = new LayoutProperties()
         {
-            DefaultBorderRadius = "8px"
+            DefaultBorderRadius = "12px"
         }
     };
 

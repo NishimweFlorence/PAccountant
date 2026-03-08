@@ -16,83 +16,80 @@
 
 <PageTitle>Transactions — PAccountant</PageTitle>
 
-<div class="d-flex justify-content-between align-center mb-4">
-    <MudText Typo="Typo.h5">Transactions</MudText>
-    <MudButton OnClick="OpenCreateDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Add Transaction</MudButton>
-</div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Transactions</MudText>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenCreateDialog">Add Transaction</MudButton>
+        </div>
 
-<MudGrid Class="mb-4">
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Transactions</MudText>
-            <MudText Typo="Typo.h5">@TransactionList.Count</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Amount</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Primary">@TotalAmount.ToString("N2")</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">This Month</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Success">@ThisMonthCount</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-4" Elevation="2">
-            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">This Month Amount</MudText>
-            <MudText Typo="Typo.h5" Color="Color.Warning">@ThisMonthAmount.ToString("N2")</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Transactions</MudText>
+                    <MudText Typo="Typo.h5">@TransactionList.Count</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total Amount</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Primary">@TotalAmount.ToString("N2")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">This Month</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Success">@ThisMonthCount</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">This Month Amount</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Warning">@ThisMonthAmount.ToString("N2")</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
 
-<MudPaper Class="pa-3 mb-4" Elevation="1">
-    <MudGrid>
-        <MudItem xs="12" md="4">
-            <MudTextField @bind-Value="SearchTerm" Placeholder="Search accounts, categories..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudSelect T="string" Value="@FilterCurrency" ValueChanged="@((string v) => FilterCurrency = v ?? string.Empty)" Label="Currency" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
-                <MudSelectItem T="string" Value="@("")">All</MudSelectItem>
-                @foreach (var c in Currencies) { <MudSelectItem T="string" Value="@c">@c</MudSelectItem> }
-            </MudSelect>
-        </MudItem>
-    </MudGrid>
-</MudPaper>
-
-<MudPaper Elevation="2">
-    <MudTable Items="FilteredTransactions" Dense="true" Hover="true" Striped="true" Loading="@IsLoading" LoadingProgressColor="Color.Primary">
-        <HeaderContent>
-            <MudTh>ID</MudTh>
-            <MudTh>Category</MudTh>
-            <MudTh>Account</MudTh>
-            <MudTh>Amount</MudTh>
-            <MudTh>Currency</MudTh>
-            <MudTh>Date</MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="ID">#@context.Id</MudTd>
-            <MudTd DataLabel="Category">
-                <MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">
-                    @(context.Category?.Name ?? "N/A")
-                </MudChip>
-            </MudTd>
-            <MudTd DataLabel="Account">@(context.Account?.Name ?? context.AccountId.ToString())</MudTd>
-            <MudTd DataLabel="Amount"><MudText Color="Color.Primary">@context.Amount.ToString("N2")</MudText></MudTd>
-            <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
-            <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(() => NavigationManager.NavigateTo($"/transactions/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => OpenDeleteConfirmation(context))" />
-            </MudTd>
-        </RowTemplate>
-        <PagerContent><MudTablePager /></PagerContent>
-    </MudTable>
-</MudPaper>
+        <MudTable Items="FilteredTransactions" Dense="true" Hover="true" Bordered="true" Striped="true" Loading="@IsLoading" LoadingProgressColor="Color.Primary">
+            <ToolBarContent>
+                <div class="d-flex gap-4 align-center flex-grow-1">
+                    <MudTextField @bind-Value="SearchTerm" Placeholder="Search accounts, categories..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Clearable="true" Margin="Margin.Dense" Class="mt-0" />
+                    <MudSelect T="string" Value="@FilterCurrency" ValueChanged="@((string v) => FilterCurrency = v ?? string.Empty)" Label="Currency" Margin="Margin.Dense" Clearable="true" Style="min-width: 150px;">
+                        <MudSelectItem T="string" Value="@("")">All</MudSelectItem>
+                        @foreach (var c in Currencies) { <MudSelectItem T="string" Value="@c">@c</MudSelectItem> }
+                    </MudSelect>
+                </div>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Category</MudTh>
+                <MudTh>Account</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh>Currency</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="ID">#@context.Id</MudTd>
+                <MudTd DataLabel="Category">
+                    <MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">
+                        @(context.Category?.Name ?? "N/A")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Account">@(context.Account?.Name ?? context.AccountId.ToString())</MudTd>
+                <MudTd DataLabel="Amount"><MudText Color="Color.Primary">@context.Amount.ToString("N2")</MudText></MudTd>
+                <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
+                <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" OnClick="@(() => NavigationManager.NavigateTo($"/transactions/{context.Id}"))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => OpenDeleteConfirmation(context))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent><MudTablePager /></PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private List<TransactionEntity> TransactionList = new();

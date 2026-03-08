@@ -29,7 +29,12 @@
 
 @code {
     [SupplyParameterFromForm(FormName = "RegisterForm")]                          
-    private UserCreateDTO registerModel { get; set; } = new UserCreateDTO { FirstName = "", LastName = "", Email = "", Password = "" };
+    public UserCreateDTO registerModel { get; set; }
+
+    protected override void OnInitialized()
+    {
+        registerModel ??= new UserCreateDTO { FirstName = "", LastName = "", Email = "", Password = "" };
+    }
 
     private void OnValidSubmit()
     {

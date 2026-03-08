@@ -63,6 +63,7 @@ namespace Application.Services.Users
                 FirstName = userDto.FirstName,
                 LastName = userDto.LastName,
                 Email = userDto.Email,
+                ProfilePictureUrl = userDto.ProfilePictureUrl,
                 PasswordHash = string.Empty,
                 IsActive = userDto.IsActive
             };

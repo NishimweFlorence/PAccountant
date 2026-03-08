@@ -1,0 +1,191 @@
+@page "/profile"
+@using Application.Interfaces
+@using Application.DTO
+@using Domain.Entities
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Infrastructure.Auth
+@rendermode InteractiveServer
+
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>My Profile — PAccountant</PageTitle>    
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Elevation="2" Class="pa-8 rounded-xl">
+        <div class="d-flex align-center justify-space-between mb-8">
+            <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight: 800;">My Profile</MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Logout" OnClick="Logout">Logout</MudButton>
+        </div>
+
+        @if (user == null)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="4" class="d-flex flex-column align-center">
+                    <MudAvatar Style="height:150px; width:150px; font-size:3rem;" Color="Color.Primary" Class="mb-4">
+                        @if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                        {
+                            <MudImage Src="@user.ProfilePictureUrl" />
+                        }
+                        else
+                        {
+                            @($"{user.FirstName?[0]}{user.LastName?[0]}".ToUpper())
+                        }
+                    </MudAvatar>
+                    
+                    <MudFileUpload T="IBrowserFile" FilesChanged="UploadPicture" Accept=".jpg,.jpeg,.png">
+                        <CustomContent>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">Change Picture</MudButton>
+                        </CustomContent>
+                    </MudFileUpload>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">JPG, PNG (Max 1MB)</MudText>
+                </MudItem>
+
+                <MudItem xs="12" md="8">
+                    <MudForm @ref="form" @bind-IsValid="@success">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" Label="First Name" @bind-Value="userDto.FirstName" Required="true" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" Label="Last Name" @bind-Value="userDto.LastName" Required="true" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField T="string" Label="Email" @bind-Value="userDto.Email" Required="true" Variant="Variant.Outlined" InputType="InputType.Email" />
+                            </MudItem>
+                        </MudGrid>
+
+                        <div class="mt-8 d-flex justify-end">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="UpdateProfile" Disabled="@(!success || loading)" Class="px-8 rounded-lg">
+                                @if (loading)
+                                {
+                                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                    <MudText Class="ms-2">Saving...</MudText>
+                                }
+                                else
+                                {
+                                    <MudText>Save Changes</MudText>
+                                }
+                            </MudButton>
+                        </div>
+                    </MudForm>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private User? user;
+    private UserUpdateDTO userDto = new();
+    private bool success;
+    private bool loading;
+    private MudForm? form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var claimsUser = authState.User;
+
+        if (claimsUser.Identity?.IsAuthenticated ?? false)
+        {
+            var email = claimsUser.FindFirst(ClaimTypes.Name)?.Value;
+            if (!string.IsNullOrEmpty(email))
+            {
+                var allUsers = UserService.GetUsers();
+                user = allUsers.FirstOrDefault(u => u.Email == email);
+                
+                if (user != null)
+                {
+                    userDto = new UserUpdateDTO
+                    {
+                        Id = user.Id,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Email = user.Email,
+                        IsActive = user.IsActive,
+                        ProfilePictureUrl = user.ProfilePictureUrl
+                    };
+                }
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task UpdateProfile()
+    {
+        if (user == null) return;
+        
+        loading = true;
+        try
+        {
+            UserService.UpdateUser(user.Id, userDto);
+            
+            if (AuthStateProvider is CustomAuthenticationStateProvider customProvider)
+            {
+                await customProvider.UpdateAuthenticationState(new UserSession
+                {
+                    Id = user.Id,
+                    Email = userDto.Email,
+                    FirstName = userDto.FirstName,
+                    LastName = userDto.LastName,
+                    ProfilePictureUrl = userDto.ProfilePictureUrl
+                });
+            }
+            
+            Snackbar.Add("Profile updated successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task UploadPicture(IBrowserFile file)
+    {
+        if (file == null) return;
+        if (file.Size > 1024 * 1024)
+        {
+            Snackbar.Add("File size exceeds 1MB", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var buffer = new byte[(int)file.Size];
+            await file.OpenReadStream(1024 * 1024).ReadAsync(buffer);
+            var base64 = Convert.ToBase64String(buffer);
+            userDto.ProfilePictureUrl = $"data:{file.ContentType};base64,{base64}";
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error uploading image: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Logout()
+    {
+        if (AuthStateProvider is CustomAuthenticationStateProvider customProvider)
+        {
+            await customProvider.UpdateAuthenticationState(null);
+            NavigationManager.NavigateTo("/", true);
+        }
+    }
+}

@@ -12,41 +12,66 @@
 
 <PageTitle>Liabilities</PageTitle>
 
-<MudPaper Class="pa-4">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>Liabilities</h3>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateLiability())">Add Liability</MudButton>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Liabilities</MudText>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@(()=>CreateLiability())">Add Liability</MudButton>
+        </div>
 
-    <MudTable Items="liabilities" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
-        <HeaderContent>
-            <MudTh>Type</MudTh>
-            <MudTh>Lender Name</MudTh>
-            <MudTh>Original Amount</MudTh>
-            <MudTh>Current Amount</MudTh>
-            <MudTh>Currency</MudTh>
-            <MudTh>Due Date</MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Lender Name">@context.LenderName</MudTd>
-            <MudTd DataLabel="Original Amount">@context.OriginalAmount.ToString("N2")</MudTd>
-            <MudTd DataLabel="Current Amount">@context.CurrentAmount.ToString("N2")</MudTd>
-            <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
-            <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>ViewDetails(context.Id))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditLiability(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteLiability(context.Id))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
-</MudPaper>
+        <MudTable Items="liabilities" Dense="true" Hover="true" Bordered="true" Striped="true" Class="mt-4" Loading="@loading" Filter="new Func<Liability,bool>(FilterFunc1)">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Type</MudTh>
+                <MudTh>Lender Name</MudTh>
+                <MudTh>Original Amount</MudTh>
+                <MudTh>Current Amount</MudTh>
+                <MudTh>Currency</MudTh>
+                <MudTh>Due Date</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Type">@context.Type</MudTd>
+                <MudTd DataLabel="Lender Name">@context.LenderName</MudTd>
+                <MudTd DataLabel="Original Amount">@context.OriginalAmount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Current Amount">@context.CurrentAmount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
+                <MudTd DataLabel="Due Date">@context.DueDate.ToShortDateString()</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" OnClick="@(()=>ViewDetails(context.Id))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(()=>EditLiability(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(()=>DeleteLiability(context.Id))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private List<Liability> liabilities = new();
     private bool loading = true;
+    private string searchString = "";
+
+    private bool FilterFunc1(Liability element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(Liability element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.LenderName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Currency?.Code.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
+            return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

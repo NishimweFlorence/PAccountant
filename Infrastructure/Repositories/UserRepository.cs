@@ -43,6 +43,7 @@ namespace Infrastructure.Repositories
                 existingUser.FirstName = user.FirstName;
                 existingUser.LastName = user.LastName;
                 existingUser.Email = user.Email;
+                existingUser.ProfilePictureUrl = user.ProfilePictureUrl;
                 existingUser.IsActive = user.IsActive;
                 existingUser.UpdatedAt = DateTime.Now;
                 _context.SaveChanges();

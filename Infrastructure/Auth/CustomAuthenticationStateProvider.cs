@@ -35,7 +35,8 @@ namespace Infrastructure.Auth
                     new Claim(ClaimTypes.Name, userSession.Email),
                     new Claim(ClaimTypes.Role, "User"),
                     new Claim("FirstName", userSession.FirstName),
-                    new Claim("LastName", userSession.LastName)
+                    new Claim("LastName", userSession.LastName),
+                    new Claim("ProfilePictureUrl", userSession.ProfilePictureUrl ?? string.Empty)
                 }, "CustomAuth"));
 
                 return await Task.FromResult(new AuthenticationState(claimsPrincipal));
@@ -58,7 +59,8 @@ namespace Infrastructure.Auth
                     new Claim(ClaimTypes.Name, userSession.Email),
                     new Claim(ClaimTypes.Role, "User"),
                     new Claim("FirstName", userSession.FirstName),
-                    new Claim("LastName", userSession.LastName)
+                    new Claim("LastName", userSession.LastName),
+                    new Claim("ProfilePictureUrl", userSession.ProfilePictureUrl ?? string.Empty)
                 }, "CustomAuth"));
             }
             else
@@ -77,5 +79,6 @@ namespace Infrastructure.Auth
         public required string Email { get; set; }
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
+        public string? ProfilePictureUrl { get; set; }
     }
 }

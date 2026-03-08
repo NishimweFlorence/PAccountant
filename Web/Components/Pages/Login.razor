@@ -30,10 +30,12 @@
 
 @code {
     [SupplyParameterFromForm(FormName = "LoginForm")]                           
-    private UserLoginDTO loginModel { get; set; } = new UserLoginDTO { Email = "", Password = "" };
+    private UserLoginDTO loginModel { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        loginModel ??= new UserLoginDTO { Email = "", Password = "" };
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 

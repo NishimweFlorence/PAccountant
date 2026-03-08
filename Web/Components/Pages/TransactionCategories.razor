@@ -13,35 +13,58 @@
 
 <PageTitle>Transaction Categories</PageTitle>
 
-<MudPaper Class="pa-4">
-    <div class="d-flex justify-content-between align-center mb-4">
-        <MudText Typo="Typo.h5">Transaction Categories</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateCategory())" StartIcon="@Icons.Material.Filled.Add">Add Category</MudButton>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Transaction Categories</MudText>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@(()=>CreateCategory())">Add Category</MudButton>
+        </div>
 
-    <MudTable Items="transactionCategories" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
-        <HeaderContent>
-            <MudTh>Id</MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Type</MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Id">@context.Id</MudTd>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Type">@context.Type?.ToString()</MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditCategory(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteCategory(context.Id))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
-</MudPaper>
+        <MudTable Items="transactionCategories" Dense="true" Hover="true" Bordered="true" Striped="true" Class="mt-4" Loading="@loading" Filter="new Func<TransactionCategory,bool>(FilterFunc1)">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.Id</MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Type">@context.Type?.ToString()</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" OnClick="@(()=>Navigation.NavigateTo($"/transactionCategories/{context.Id}"))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(()=>EditCategory(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(()=>DeleteCategory(context.Id))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
     List<Domain.Entities.TransactionCategory> transactionCategories = new();
     private bool loading = true;
+    private string searchString = "";
+
+    private bool FilterFunc1(TransactionCategory element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(TransactionCategory element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Type?.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
+            return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

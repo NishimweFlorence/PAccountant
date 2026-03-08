@@ -12,45 +12,70 @@
 
 <PageTitle>Loans</PageTitle>
 
-<MudPaper Class="pa-4">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>Loans</h3>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateLoan())">Add Loan</MudButton>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Loans</MudText>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@(()=>CreateLoan())">Add Loan</MudButton>
+        </div>
 
-    <MudTable Items="loans" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
-        <HeaderContent>
-            <MudTh>Borrower</MudTh>
-            <MudTh>Amount</MudTh>
-            <MudTh>Currency</MudTh>
-            <MudTh>Rate (%)</MudTh>
-            <MudTh>Total to Pay</MudTh>
-            <MudTh>Date</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Borrower">@context.Borrower</MudTd>
-            <MudTd DataLabel="Amount">@context.Amount.ToString("N2")</MudTd>
-            <MudTd DataLabel="Currency">@context.Currency</MudTd>
-            <MudTd DataLabel="Rate">@context.InterestRate.ToString("P2")</MudTd>
-            <MudTd DataLabel="Total">@context.AmountToPay.ToString("N2")</MudTd>
-            <MudTd DataLabel="Date">@context.LoanDate?.ToShortDateString()</MudTd>
-            <MudTd DataLabel="Status">
-                <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small">@context.Status</MudChip>
-            </MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>ViewDetails(context.Id))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditLoan(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteLoan(context.Id))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
-</MudPaper>
+        <MudTable Items="loans" Dense="true" Hover="true" Bordered="true" Striped="true" Class="mt-4" Loading="@loading" Filter="new Func<LoanCreateDTO,bool>(FilterFunc1)">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Borrower</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh>Currency</MudTh>
+                <MudTh>Rate (%)</MudTh>
+                <MudTh>Total to Pay</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Borrower">@context.Borrower</MudTd>
+                <MudTd DataLabel="Amount">@context.Amount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Currency">@context.Currency</MudTd>
+                <MudTd DataLabel="Rate">@context.InterestRate.ToString("P2")</MudTd>
+                <MudTd DataLabel="Total">@context.AmountToPay.ToString("N2")</MudTd>
+                <MudTd DataLabel="Date">@context.LoanDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small">@context.Status</MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" OnClick="@(()=>ViewDetails(context.Id))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(()=>EditLoan(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(()=>DeleteLoan(context.Id))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private List<LoanCreateDTO> loans = new();
     private bool loading = true;
+    private string searchString = "";
+
+    private bool FilterFunc1(LoanCreateDTO element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(LoanCreateDTO element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Borrower.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Currency.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

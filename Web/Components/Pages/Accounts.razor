@@ -13,41 +13,66 @@
 
 <PageTitle>Accounts</PageTitle>
 
-<MudPaper Class="pa-4">
-    <div class="d-flex justify-content-between align-center mb-4">
-        <MudText Typo="Typo.h5">Accounts</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>CreateAccount())" StartIcon="@Icons.Material.Filled.Add">Add Account</MudButton>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-4">
+            <MudText Typo="Typo.h5" Color="Color.Primary">Accounts</MudText>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@(()=>CreateAccount())">Add Account</MudButton>
+        </div>
 
-    <MudTable Items="accounts" Dense="true" Hover="true" Class="mt-4" Loading="@loading">
-        <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Type</MudTh>
-            <MudTh>Balance</MudTh>
-            <MudTh>Currency</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Balance">@context.Balance?.ToString("N2")</MudTd>
-            <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
-            <MudTd DataLabel="Status">
-                <MudChip T="string" Size="Size.Small" Color="@(context.Status == "Active" ? Color.Success : Color.Default)">@context.Status</MudChip>
-            </MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" OnClick="@(()=>Navigation.NavigateTo($"/accounts/{context.Id}"))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(()=>EditAccount(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(()=>DeleteAccount(context.Id))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
-</MudPaper>
+        <MudTable Items="accounts" Dense="true" Hover="true" Bordered="true" Striped="true" Class="mt-4" Loading="@loading" Filter="new Func<Account,bool>(FilterFunc1)">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Balance</MudTh>
+                <MudTh>Currency</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Type">@context.Type</MudTd>
+                <MudTd DataLabel="Balance">@context.Balance?.ToString("N2")</MudTd>
+                <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Size="Size.Small" Color="@(context.Status == "Active" ? Color.Success : Color.Default)">@context.Status</MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" OnClick="@(()=>Navigation.NavigateTo($"/accounts/{context.Id}"))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(()=>EditAccount(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(()=>DeleteAccount(context.Id))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
     List<Domain.Entities.Account> accounts = new();
     private bool loading = true;
+    private string searchString = "";
+
+    private bool FilterFunc1(Account element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(Account element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

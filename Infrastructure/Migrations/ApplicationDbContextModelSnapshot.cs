@@ -30,6 +30,9 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<float?>("AccountNumber")
+                        .HasColumnType("real");
+
                     b.Property<decimal?>("Balance")
                         .HasColumnType("decimal(18,2)");
 

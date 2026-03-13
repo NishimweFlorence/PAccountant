@@ -34,6 +34,7 @@ namespace Infrastructure.Repositories
             {
                 Name = AccountDTO.Name,
                 Type = AccountDTO.Type,
+                AccountNumber = AccountDTO.AccountNumber,
                 Balance = AccountDTO.Balance,
                 Currency = AccountDTO.Currency != null ? Currency.FromCode(AccountDTO.Currency) : null,
                 Status = AccountDTO.Status,

@@ -25,6 +25,9 @@
                     <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
+                    <MudTextField Label="Account Number" @bind-Value="Model.AccountNumber" For="@(() => Model.AccountNumber)" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
                     <MudNumericField Label="Balance" @bind-Value="Model.Balance" For="@(() => Model.Balance)" Variant="Variant.Outlined" Format="N2" />
                 </MudItem>
                 @if (!IsEdit)

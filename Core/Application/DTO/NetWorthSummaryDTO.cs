@@ -27,6 +27,7 @@ namespace Application.DTO
         public int     Id       { get; set; }
         public string  Name     { get; set; } = string.Empty;
         public string  Type     { get; set; } = string.Empty;
+        public float?  AccountNumber { get; set; }
         public decimal Balance  { get; set; }
         public string  Currency { get; set; } = string.Empty;
         public string  Status   { get; set; } = string.Empty;

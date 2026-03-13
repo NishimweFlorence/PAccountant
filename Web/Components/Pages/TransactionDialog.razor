@@ -1,4 +1,4 @@
-@using  Application.DTO
+@using Application.DTO
 @using System.ComponentModel.DataAnnotations
 @using Domain.Entities
 @using Application.Interfaces
@@ -19,45 +19,18 @@
             <DataAnnotationsValidator />
             <MudGrid Spacing="3">
                 <MudItem xs="12" sm="6">
-                    <MudSelect T="int"
-                               @bind-Value="Model.IdTransactionCategory"
-                               Label="Transaction Category"
-                               Variant="Variant.Outlined"
-                               AdornmentIcon="@Icons.Material.Filled.Category"
-                               Adornment="Adornment.Start"
-                               AdornmentColor="Color.Primary"
-                               Required="true">
-                        @foreach (var cat in TransactionCategories)
-                        {
-                            <MudSelectItem T="int" Value="@cat.Id">@cat.Name</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudDatePicker Label="Transaction Date"
+                                   Date="@Model.TransactionDate"
+                                   DateChanged="@((DateTime? d) => Model.TransactionDate = d ?? DateTime.Today)"
+                                   Variant="Variant.Outlined"
+                                   Required="true"
+                                   Editable="true" />
                 </MudItem>
-
-                <MudItem xs="12" sm="6">
-                    <MudSelect T="int"
-                               @bind-Value="Model.AccountId"
-                               Label="Account"
-                               Variant="Variant.Outlined"
-                               AdornmentIcon="@Icons.Material.Filled.AccountBalance"
-                               Adornment="Adornment.Start"
-                               AdornmentColor="Color.Secondary"
-                               Required="true">
-                        @foreach (var acc in Accounts)
-                        {
-                            <MudSelectItem T="int" Value="@acc.Id">@acc.Name (@acc.Balance @acc.Currency?.Symbol)</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-
                 <MudItem xs="12" sm="6">
                     <MudSelect T="string"
                                @bind-Value="Model.Currency"
                                Label="Currency"
                                Variant="Variant.Outlined"
-                               AdornmentIcon="@Icons.Material.Filled.AttachMoney"
-                               Adornment="Adornment.Start"
-                               AdornmentColor="Color.Success"
                                Required="true">
                         @foreach (var c in Currencies)
                         {
@@ -67,26 +40,31 @@
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
-                    <MudNumericField T="decimal"
-                                     @bind-Value="Model.Amount"
-                                     Label="Amount"
-                                     Variant="Variant.Outlined"
-                                     AdornmentColor="Color.Success"
-                                     Min="0.01m"
-                                     Step="0.01m"
-                                     Format="F2"
-                                     Required="true" />
+                    <MudTextField @bind-Value="Model.Description" Label="Description" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.ReferenceNumber" Label="Reference Number" Variant="Variant.Outlined" />
                 </MudItem>
 
-                <MudItem xs="12" sm="6">
-                    <MudDatePicker Label="Transaction Date"
-                                   Date="@Model.TransactionDate"
-                                   DateChanged="@((DateTime? d) => Model.TransactionDate = d ?? DateTime.Today)"
-                                   Variant="Variant.Outlined"
-                                   AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
-                                   AdornmentColor="Color.Secondary"
-                                   Required="true"
-                                   Editable="true" />
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1"><b>Entries</b></MudText>
+                    @foreach (var entry in Model.Entries)
+                    {
+                        <div class="d-flex gap-2 mb-2 align-center">
+                            <MudSelect T="int?" @bind-Value="entry.AccountId" Label="Account" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                <MudSelectItem T="int?" Value="@((int?)null)">None</MudSelectItem>
+                                @foreach (var acc in Accounts) { <MudSelectItem T="int?" Value="@acc.Id">@acc.Name</MudSelectItem> }
+                            </MudSelect>
+                            <MudSelect T="int?" @bind-Value="entry.CategoryId" Label="Category" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                <MudSelectItem T="int?" Value="@((int?)null)">None</MudSelectItem>
+                                @foreach (var cat in TransactionCategories) { <MudSelectItem T="int?" Value="@cat.Id">@cat.Name</MudSelectItem> }
+                            </MudSelect>
+                            <MudNumericField T="decimal" @bind-Value="entry.Debit" Label="Debit" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" />
+                            <MudNumericField T="decimal" @bind-Value="entry.Credit" Label="Credit" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => Model.Entries.Remove(entry))" />
+                        </div>
+                    }
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" OnClick="@(() => Model.Entries.Add(new TransactionEntryDTO()))">Add Entry</MudButton>
                 </MudItem>
             </MudGrid>
         </EditForm>
@@ -100,7 +78,7 @@
 @code{
     [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
 
-    [Parameter] public CreateTransactionDTO Model { get; set; } = new();
+    [Parameter] public CreateTransactionDTO Model { get; set; } = new() { Entries = new List<TransactionEntryDTO>() };
     [Parameter] public bool IsEdit { get; set; }
     [Parameter] public int TransactionId { get; set; }
     [Parameter] public List<TransactionCategory> TransactionCategories { get; set; } = new();
@@ -111,16 +89,37 @@
     {
         try
         {
+            if (Model.Entries == null || !Model.Entries.Any())
+            {
+                Snackbar.Add("Please add at least one entry.", Severity.Warning);
+                return;
+            }
+
+            var totalDebit = Model.Entries.Sum(e => e.Debit);
+            var totalCredit = Model.Entries.Sum(e => e.Credit);
+            
+            if (totalDebit != totalCredit)
+            {
+                Snackbar.Add($"Transaction unbalanced! Debits: {totalDebit}, Credits: {totalCredit}. Difference: {Math.Abs(totalDebit - totalCredit)}", Severity.Warning);
+                return;
+            }
+
+            if (totalDebit <= 0)
+            {
+                Snackbar.Add("Transaction amount must be greater than zero.", Severity.Warning);
+                return;
+            }
+
             if (IsEdit)
             {
                 var updateDto = new UpdateTransactionDTO
                 {
-                    IdTransactionCategory = Model.IdTransactionCategory,
-                    AccountId = Model.AccountId,
-                    Amount = Model.Amount,
+                    Description = Model.Description,
+                    ReferenceNumber = Model.ReferenceNumber,
+                    BudgetId = Model.BudgetId,
                     Currency = Model.Currency,
                     TransactionDate = Model.TransactionDate,
-                    CreatedAt = Model.CreatedAt
+                    Entries = Model.Entries
                 };
                 await TransactionService.UpdateTransactionAsync(TransactionId, updateDto);
                 Snackbar.Add("Transaction updated successfully!", Severity.Success);

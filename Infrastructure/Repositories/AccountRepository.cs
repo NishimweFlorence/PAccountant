@@ -30,17 +30,45 @@ namespace Infrastructure.Repositories
 
         public async Task CreateAccountAsync(AccountCreateDTO AccountDTO)
         {
+            var currency = AccountDTO.Currency != null ? Currency.FromCode(AccountDTO.Currency) : null;
             Account Account = new()
             {
                 Name = AccountDTO.Name,
-                Type = AccountDTO.Type,
+                AccountNumber = AccountDTO.AccountNumber,
+                Type = AccountDTO.Type != null ? AccountType.FromString(AccountDTO.Type) : null,
                 Balance = AccountDTO.Balance,
-                Currency = AccountDTO.Currency != null ? Currency.FromCode(AccountDTO.Currency) : null,
+                Currency = currency,
                 Status = AccountDTO.Status,
                 CreatedAt = DateTime.Now
             };
             _dbContext.Accounts.Add(Account);
             await _dbContext.SaveChangesAsync();
+
+            if (Account.Balance > 0)
+            {
+                var equityCat = await _dbContext.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Starting Balance");
+                if (equityCat == null)
+                {
+                    equityCat = new TransactionCategory { Name = "Starting Balance", Type = TransactionType.FromString("Equity") };
+                    _dbContext.TransactionCategories.Add(equityCat);
+                    await _dbContext.SaveChangesAsync();
+                }
+
+                var transaction = new Transaction
+                {
+                    TransactionDate = DateTime.Now,
+                    Description = $"Initial Balance for Account: {Account.Name}",
+                    Currency = Currency.FromCode(Account.Currency!.Code),
+                    CreatedAt = DateTime.Now,
+                    Entries = new List<TransactionEntry>
+                    {
+                        new TransactionEntry { AccountId = Account.Id, Debit = Account.Balance.GetValueOrDefault(), Credit = 0 },
+                        new TransactionEntry { CategoryId = equityCat.Id, Debit = 0, Credit = Account.Balance.GetValueOrDefault() }
+                    }
+                };
+                _dbContext.Transactions.Add(transaction);
+                await _dbContext.SaveChangesAsync();
+            }
         }
     
 
@@ -50,7 +78,8 @@ namespace Infrastructure.Repositories
             if (Account == null) return;
             
             Account.Name = AccountDTO.Name;
-            Account.Type = AccountDTO.Type;
+            Account.AccountNumber = AccountDTO.AccountNumber;
+            Account.Type = AccountDTO.Type != null ? AccountType.FromString(AccountDTO.Type) : null;
             Account.Balance = AccountDTO.Balance;
             Account.Status = AccountDTO.Status;
             await _dbContext.SaveChangesAsync();

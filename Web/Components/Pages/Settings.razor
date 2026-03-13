@@ -1,0 +1,230 @@
+@page "/settings"
+@using Application.Interfaces
+@using Application.DTO
+@using Domain.ValueObjects
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@rendermode InteractiveServer
+
+@inject ILookupService LookupService
+@inject ISnackbar Snackbar
+
+<PageTitle>Settings — PAccountant</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex align-center justify-space-between mb-8 pb-4" style="border-bottom: 1px solid var(--mud-palette-divider);">
+        <div>
+            <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 800;">Settings</MudText>
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Manage your custom configuration</MudText>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-6" />
+    }
+    else
+    {
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            @foreach (var categoryLabel in TabCategories)
+            {
+                var catKey = categoryLabel.Replace(" ", ""); // "Account Type" -> "AccountType"
+                <MudTabPanel Text="@categoryLabel">
+                    <MudGrid>
+                        <MudItem xs="12" md="7">
+                            <MudText Typo="Typo.h6" Class="mb-4">Custom @categoryLabel s</MudText>
+                            @if (!CustomLookups.Any(c => c.Category == catKey))
+                            {
+                                <MudAlert Severity="Severity.Info" Class="mb-4">No custom @(categoryLabel.ToLower())s defined. You map add some below.</MudAlert>
+                            }
+                            else
+                            {
+                                <MudTable Items="@CustomLookups.Where(c => c.Category == catKey)" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Class="mb-4" Outlined="true">
+                                    <HeaderContent>
+                                        <MudTh>Name</MudTh>
+                                        <MudTh Style="width: 120px; text-align: center;">Actions</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd DataLabel="Name">
+                                            @if (EditItemId == context.Id)
+                                            {
+                                                <MudTextField @bind-Value="EditItemName" Margin="Margin.Dense" Outlined="true" />
+                                            }
+                                            else
+                                            {
+                                                @context.Name
+                                            }
+                                        </MudTd>
+                                        <MudTd DataLabel="Actions" Class="text-center">
+                                            @if (EditItemId == context.Id)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" OnClick="() => SaveEdit(context)" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" Size="Size.Small" OnClick="CancelEdit" />
+                                            }
+                                            else
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => StartEdit(context)" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteLookup(context.Id)" />
+                                            }
+                                        </MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            }
+                        </MudItem>
+                        
+                        <MudItem xs="12" md="5">
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg bg-surface-variant">
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 600;" Class="mb-3">Add New @categoryLabel</MudText>
+                                <MudTextField @bind-Value="NewItemNames[catKey]" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="() => AddLookup(catKey)" Disabled="@string.IsNullOrWhiteSpace(NewItemNames[catKey])">
+                                    Add Type
+                                </MudButton>
+                            </MudPaper>
+                            
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-6 d-block">Default Types (System)</MudText>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                @foreach (var dt in GetDefaultTypes(catKey))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@dt</MudChip>
+                                }
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+            }
+        </MudTabs>
+    }
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private bool IsLoading = true;
+    private int CurrentUserId;
+    private List<CustomLookupDTO> CustomLookups = new();
+    
+    // UI state
+    private string[] TabCategories = { "Account Type", "Asset Type", "Expense Type", "Income Type" };
+    private Dictionary<string, string> NewItemNames = new();
+    
+    private int? EditItemId;
+    private string EditItemName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        foreach (var cat in TabCategories)
+        {
+            var key = cat.Replace(" ", "");
+            NewItemNames[key] = "";
+        }
+
+        var authState = await AuthStateTask;
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(idClaim, out var id))
+            {
+                CurrentUserId = id;
+                await LoadDataAsync();
+            }
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            CustomLookups = await LookupService.GetAllCustomLookupsAsync(CurrentUserId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading settings: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddLookup(string categoryKey)
+    {
+        var name = NewItemNames[categoryKey];
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        try
+        {
+            await LookupService.CreateCustomLookupAsync(CurrentUserId, categoryKey, name);
+            Snackbar.Add($"Added {name} to {categoryKey}", Severity.Success);
+            NewItemNames[categoryKey] = ""; // reset
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+    }
+
+    private void StartEdit(CustomLookupDTO item)
+    {
+        EditItemId = item.Id;
+        EditItemName = item.Name;
+    }
+
+    private void CancelEdit()
+    {
+        EditItemId = null;
+        EditItemName = "";
+    }
+
+    private async Task SaveEdit(CustomLookupDTO item)
+    {
+        if (string.IsNullOrWhiteSpace(EditItemName))
+        {
+            Snackbar.Add("Name cannot be empty", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await LookupService.UpdateCustomLookupAsync(item.Id, EditItemName);
+            Snackbar.Add("Item updated successfully (past records also updated)", Severity.Success);
+            EditItemId = null;
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating item: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteLookup(int id)
+    {
+        try
+        {
+            await LookupService.DeleteCustomLookupAsync(id);
+            Snackbar.Add("Item deleted successfully", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting item: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private List<string> GetDefaultTypes(string categoryKey)
+    {
+        return categoryKey switch
+        {
+            "AccountType" => AccountType.GetAll().Select(x => x.Name).ToList(),
+            "AssetType" => new List<string> { "Land", "Vehicle", "Stock", "Bond", "Building", "Other" },
+            "ExpenseType" => new List<string> { "Food & Drinks", "Transport", "Gift Given", "Other" },
+            "IncomeType" => new List<string> { "Salary", "Profit on Bond", "Gift", "Other" },
+            _ => new List<string>()
+        };
+    }
+}

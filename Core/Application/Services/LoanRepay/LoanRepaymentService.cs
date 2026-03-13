@@ -23,40 +23,8 @@ namespace Application.Services.LoanRepayments
 
         public async Task<LoanRepaymentCreateDTO> CreateLoanRepaymentAsync(LoanRepaymentCreateDTO loanRepayment)
         {
-            // 1. Update Loan Balance
-            var loan = await _loanRepository.GetLoanByIdAsync(loanRepayment.LoanId);
-            if (loan != null)
-            {
-                loan.AmountToPay -= loanRepayment.Amount;
-                await _loanRepository.UpdateLoanAsync(new LoanUpdateDTO 
-                { 
-                    Id = loan.Id,
-                    AccountId = loan.AccountId,
-                    Borrower = loan.Borrower,
-                    Amount = loan.Amount,
-                    InterestRate = loan.InterestRate,
-                    AmountToPay = loan.AmountToPay,
-                    Currency = loan.Currency,
-                    LoanDate = loan.LoanDate,
-                    Description = loan.Description,
-                    Status = loan.Status
-                });
-            }
-
-            // 2. Update Account Balance
-            var account = await _accountRepository.GetAccountByIdAsync(loanRepayment.AccountId);
-            if (account != null)
-            {
-                account.Balance = (account.Balance ?? 0) + loanRepayment.Amount;
-                await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
-                { 
-                    Name = account.Name,
-                    Type = account.Type,
-                    Balance = account.Balance.GetValueOrDefault(),
-                    Status = account.Status
-                });
-            }
-
+            // Balance updates and transactions are now handled within the repository's CreateLoanRepaymentAsync
+            // to ensure atomicity and avoid redundant updates.
             return await _loanRepaymentRepository.CreateLoanRepaymentAsync(loanRepayment);
         }
 

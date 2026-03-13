@@ -1,0 +1,118 @@
+@page "/incomestatement"
+@using Application.DTO
+@using Application.Interfaces
+@using Microsoft.JSInterop
+@inject IReportingService ReportingService
+@inject IJSRuntime JS
+
+<PageTitle>Income Statement</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Income Statement</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="3">
+    <MudGrid>
+        <MudItem xs="12" sm="5">
+            <MudDatePicker Label="Start Date" @bind-Date="StartDate" />
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudDatePicker Label="End Date" @bind-Date="EndDate" />
+        </MudItem>
+        <MudItem xs="12" sm="2" Class="d-flex align-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync">Generate</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (IsLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (Report != null)
+{
+    <MudPaper Class="pa-4" Elevation="3">
+        <MudGrid>
+            <MudItem xs="6">
+                <MudText Typo="Typo.h5" GutterBottom="true">Revenue</MudText>
+                @foreach (var line in Report.RevenueLines)
+                {
+                    <div class="d-flex justify-space-between py-1">
+                        <MudText>@line.CategoryName</MudText>
+                        <MudText>@line.Amount.ToString("C")</MudText>
+                    </div>
+                }
+                <MudDivider Class="my-2" />
+                <div class="d-flex justify-space-between py-1">
+                    <MudText Typo="Typo.subtitle1"><b>Total Revenue</b></MudText>
+                    <MudText Typo="Typo.subtitle1"><b>@Report.TotalRevenue.ToString("C")</b></MudText>
+                </div>
+            </MudItem>
+
+            <MudItem xs="6">
+                <MudText Typo="Typo.h5" GutterBottom="true">Expenses</MudText>
+                @foreach (var line in Report.ExpenseLines)
+                {
+                    <div class="d-flex justify-space-between py-1">
+                        <MudText>@line.CategoryName</MudText>
+                        <MudText>@line.Amount.ToString("C")</MudText>
+                    </div>
+                }
+                <MudDivider Class="my-2" />
+                <div class="d-flex justify-space-between py-1">
+                    <MudText Typo="Typo.subtitle1"><b>Total Expenses</b></MudText>
+                    <MudText Typo="Typo.subtitle1"><b>@Report.TotalExpenses.ToString("C")</b></MudText>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+                <div class="d-flex justify-space-between py-2 align-center rounded" style="background-color: var(--mud-palette-background-grey); padding: 0 16px;">
+                    <MudText Typo="Typo.h5"><b>Net Income</b></MudText>
+                    <MudText Typo="Typo.h5" Color="@(Report.NetIncome >= 0 ? Color.Success : Color.Error)">
+                        <b>@Report.NetIncome.ToString("C")</b>
+                    </MudText>
+                </div>
+            </MudItem>
+        </MudGrid>
+        
+        <MudDivider Class="my-4" />
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportExcelAsync">Download Excel View</MudButton>
+    </MudPaper>
+}
+
+@code {
+    private DateTime? StartDate { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime? EndDate { get; set; } = DateTime.Now;
+    private IncomeStatementDTO? Report { get; set; }
+    private bool IsLoading { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            if (StartDate.HasValue && EndDate.HasValue)
+            {
+                Report = await ReportingService.GetIncomeStatementAsync(StartDate.Value, EndDate.Value);
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ExportExcelAsync()
+    {
+        if (StartDate.HasValue && EndDate.HasValue)
+        {
+            var excelData = await ReportingService.ExportIncomeStatementToExcelAsync(StartDate.Value, EndDate.Value);
+            var base64 = Convert.ToBase64String(excelData);
+            await JS.InvokeVoidAsync("downloadFileFromStream", "IncomeStatement.xlsx", base64);
+        }
+    }
+}

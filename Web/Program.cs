@@ -16,8 +16,16 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Application.Services.Users;
 using Application.Services.Budgets;
 using Application.Services.NetWorth;
+using Application.Services.Incomes;
+using Application.Services.Expenses;
+using Application.Services;
+using Infrastructure.Services;
+using Web.Services;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -38,6 +46,11 @@ builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<INetWorthService, NetWorthService>();
+builder.Services.AddScoped<IIncomeService, IncomeService>();
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<ITransactionPdfService, TransactionPdfService>();
+builder.Services.AddScoped<IReportingService, Infrastructure.Services.ReportingService>();
+builder.Services.AddScoped<ILookupService, LookupService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();

@@ -8,6 +8,7 @@ namespace Domain.Entities
         public string Type { get; set; } = null!;
         public string LenderName { get; set; } = null!;
         public decimal OriginalAmount { get; set; }
+        public decimal InterestRate { get; set; }
         public decimal CurrentAmount { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime CreatedAt { get; set; }

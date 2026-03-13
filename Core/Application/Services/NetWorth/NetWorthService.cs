@@ -16,20 +16,31 @@ namespace Application.Services.NetWorth
         private readonly IAssetService     _assetService;
         private readonly ILiabilityService _liabilityService;
         private readonly ILoanService      _loanService;
+        private readonly IReportingService _reportingService;
 
         public NetWorthService(
             IAccountService   accountService,
             IAssetService     assetService,
             ILiabilityService liabilityService,
-            ILoanService      loanService)
+            ILoanService      loanService,
+            IReportingService reportingService)
         {
             _accountService   = accountService;
             _assetService     = assetService;
             _liabilityService = liabilityService;
             _loanService      = loanService;
+            _reportingService = reportingService;
         }
 
         public async Task<NetWorthSummaryDTO> GetNetWorthSummaryAsync()
+        {
+            // Existing logic for current summary
+            var snapshot = await GetNetWorthSummarySnapshotAsync();
+            snapshot.Trends = await GetNetWorthTrendsAsync(6); // Default 6 months for dashboard
+            return snapshot;
+        }
+
+        private async Task<NetWorthSummaryDTO> GetNetWorthSummarySnapshotAsync()
         {
             // ── Accounts ────────────────────────────────────────────────
             var accounts = await _accountService.GetAllAccountsAsync();
@@ -37,7 +48,7 @@ namespace Application.Services.NetWorth
             {
                 Id       = a.Id,
                 Name     = a.Name     ?? "Unnamed",
-                Type     = a.Type     ?? "—",
+                Type     = a.Type?.Name ?? "—",
                 Balance  = a.Balance  ?? 0m,
                 Currency = a.Currency?.Code ?? "RWF",
                 Status   = a.Status   ?? "Active",
@@ -49,7 +60,7 @@ namespace Application.Services.NetWorth
             {
                 Id           = a.Id,
                 Name         = a.Name,
-                Category     = a.Category ?? "—",
+                Type         = a.Type?.Name ?? "—",
                 CurrentValue = a.CurrentValue,
                 Currency     = a.Currency?.Code ?? "RWF",
             }).ToList();
@@ -102,6 +113,36 @@ namespace Application.Services.NetWorth
                 LoansGiven       = loanDtos,
                 Liabilities      = liabilityDtos,
             };
+        }
+
+        public async Task<List<NetWorthTrendPointDTO>> GetNetWorthTrendsAsync(int months)
+        {
+            var trends = new List<NetWorthTrendPointDTO>();
+            var today = DateTime.Today;
+
+            // Generate points for the last N months (including current)
+            for (int i = months - 1; i >= 0; i--)
+            {
+                var date = new DateTime(today.Year, today.Month, 1).AddMonths(-i);
+                // End of that month
+                var endOfMonth = new DateTime(date.Year, date.Month, DateTime.DaysInMonth(date.Year, date.Month));
+                
+                // Use the reporting service to get a balance sheet as of that date
+                var balanceSheet = await _reportingService.GetBalanceSheetAsync(endOfMonth);
+
+                trends.Add(new NetWorthTrendPointDTO
+                {
+                    Month = endOfMonth.ToString("MMM yyyy"),
+                    Accounts = balanceSheet.Assets.Sum(a => a.Amount), // This includes bank accounts and loans in the current reporting logic
+                    Assets = (await _assetService.GetAllAssetsAsync())
+                                .Where(a => a.CreatedAt <= endOfMonth) // Correctly filter assets that existed then
+                                .Sum(a => a.CurrentValue), 
+                    Liabilities = balanceSheet.TotalLiabilities,
+                    NetWorth = balanceSheet.TotalEquity
+                });
+            }
+
+            return trends;
         }
     }
 }

@@ -1,3 +1,6 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Infrastructure.Auth
+
 <MudNavMenu>
     <AuthorizeView>
         <Authorized>
@@ -13,9 +16,6 @@
             <MudNavLink Href="loans" Icon="@Icons.Material.Filled.Money">
                 Loans
             </MudNavLink>
-            <MudNavLink Href="loan-repayments" Icon="@Icons.Material.Filled.ReceiptLong">
-                Loans Repayment
-            </MudNavLink>
             <MudNavLink Href="/liabilities" Icon="@Icons.Material.Filled.People">
                 Liability
             </MudNavLink>
@@ -25,11 +25,11 @@
             <MudNavLink Href="/budgets" Icon="@Icons.Material.Filled.PieChart">
                 Budgets
             </MudNavLink>
-            <MudNavLink Href="/transactionCategories" Icon="@Icons.Material.Filled.Add">
-                Transaction Categories
-            </MudNavLink>
-            <MudNavLink Href="/profile" Icon="@Icons.Material.Filled.Person">
+            <MudNavLink Href="/Profile" Icon="@Icons.Material.Filled.Person">
                 Profile
+            </MudNavLink>
+            <MudNavLink Href="/Settings" Icon="@Icons.Material.Filled.Settings">
+                Settings
             </MudNavLink>
         </Authorized>
     </AuthorizeView>

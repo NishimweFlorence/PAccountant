@@ -23,7 +23,7 @@ namespace Infrastructure.Repositories
             return await _dbContext.Assets.ToListAsync();
         }
 
-        public async Task<Asset> GetAssetByIdAsync(int id)
+        public async Task<Asset?> GetAssetByIdAsync(int id)
         {
             return await _dbContext.Assets.FirstOrDefaultAsync(c => c.Id == id);
         }
@@ -33,11 +33,13 @@ namespace Infrastructure.Repositories
             Asset asset = new()
             {
                 Name = assetCreateDTO.Name,
-                Category = assetCreateDTO.Category,
+                Type = AssetType.FromString(assetCreateDTO.Type),
                 PurchaseDate = assetCreateDTO.PurchaseDate,
                 Currency = Currency.FromCode(assetCreateDTO.Currency),
                 PurchaseValue = assetCreateDTO.PurchaseValue,
                 CurrentValue = assetCreateDTO.CurrentValue,
+                ValueChange = ValueChangeType.FromString(assetCreateDTO.ValueChange),
+                Rate = assetCreateDTO.Rate,
                 CreatedAt = DateTime.UtcNow,
             };
             _dbContext.Assets.Add(asset);
@@ -50,11 +52,13 @@ namespace Infrastructure.Repositories
             if (asset == null) return;
 
             asset.Name = assetUpdateDTO.Name;
-            asset.Category = assetUpdateDTO.Category;
+            asset.Type = AssetType.FromString(assetUpdateDTO.Type);
             asset.PurchaseDate = assetUpdateDTO.PurchaseDate;
             asset.Currency = Currency.FromCode(assetUpdateDTO.Currency);
             asset.PurchaseValue = assetUpdateDTO.PurchaseValue;
             asset.CurrentValue = assetUpdateDTO.CurrentValue;
+            asset.ValueChange = ValueChangeType.FromString(assetUpdateDTO.ValueChange);
+            asset.Rate = assetUpdateDTO.Rate;
             await _dbContext.SaveChangesAsync();
         }
 

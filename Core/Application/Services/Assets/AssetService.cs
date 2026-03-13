@@ -16,12 +16,22 @@ namespace Application.Services.Assets
 
         public async Task<List<Asset>> GetAllAssetsAsync()
         {
-            return await _asset.GetAllAssetsAsync();
+            var assets = await _asset.GetAllAssetsAsync();
+            foreach (var asset in assets)
+            {
+                CalculateCurrentValue(asset);
+            }
+            return assets;
         }
 
-        public async Task<Asset> GetAssetByIdAsync(int id)
+        public async Task<Asset?> GetAssetByIdAsync(int id)
         {
-            return await _asset.GetAssetByIdAsync(id);
+            var asset = await _asset.GetAssetByIdAsync(id);
+            if (asset != null)
+            {
+                CalculateCurrentValue(asset);
+            }
+            return asset;
         }
 
         public async Task CreateAssetAsync(AssetCreateDTO assetDTO)
@@ -37,6 +47,34 @@ namespace Application.Services.Assets
         public async Task DeleteAssetAsync(int id)
         {
             await _asset.DeleteAssetAsync(id);
+        }
+
+        private void CalculateCurrentValue(Asset asset)
+        {
+            if (asset.ValueChange == null || asset.ValueChange == Domain.ValueObjects.ValueChangeType.None || asset.Rate == 0)
+            {
+                asset.CurrentValue = asset.PurchaseValue;
+                return;
+            }
+
+            var daysPassed = (DateTime.Now - asset.PurchaseDate).TotalDays;
+            if (daysPassed < 0) daysPassed = 0;
+            
+            double yearsPassed = daysPassed / 365.25;
+            double rate = (double)asset.Rate / 100.0;
+            double compoundMultiplier = 1.0;
+
+            if (asset.ValueChange == Domain.ValueObjects.ValueChangeType.Appreciate)
+            {
+                compoundMultiplier = Math.Pow(1.0 + rate, yearsPassed);
+            }
+            else if (asset.ValueChange == Domain.ValueObjects.ValueChangeType.Depreciate)
+            {
+                compoundMultiplier = Math.Pow(1.0 - rate, yearsPassed);
+                if (compoundMultiplier < 0) compoundMultiplier = 0; // Value cannot drop below 0
+            }
+
+            asset.CurrentValue = asset.PurchaseValue * (decimal)compoundMultiplier;
         }
     }
 }

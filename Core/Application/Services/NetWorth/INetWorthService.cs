@@ -10,5 +10,6 @@ namespace Application.Interfaces
         ///   Net Worth    = Total Value − Liabilities
         /// </summary>
         Task<NetWorthSummaryDTO> GetNetWorthSummaryAsync();
+        Task<List<NetWorthTrendPointDTO>> GetNetWorthTrendsAsync(int months);
     }
 }

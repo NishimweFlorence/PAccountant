@@ -1,35 +1,79 @@
 @page "/register"
 @using Microsoft.AspNetCore.Authorization
 @attribute [AllowAnonymous]
+@using PAccountant.Components.Layout
 @layout AuthLayout
 @inject IUserService UserService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
-    <MudPaper Class="pa-8" Elevation="4">
-        <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Register</MudText>
-        
-        <EditForm Model="@registerModel" OnValidSubmit="OnValidSubmit" FormName="RegisterForm">
-            <DataAnnotationsValidator />
-            
-            <MudTextField Label="First Name" @bind-Value="registerModel.FirstName" For="@(() => registerModel.FirstName)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
-            <MudTextField Label="Last Name" @bind-Value="registerModel.LastName" For="@(() => registerModel.LastName)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
-            <MudTextField Label="Email" @bind-Value="registerModel.Email" For="@(() => registerModel.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
-            <MudTextField Label="Password" @bind-Value="registerModel.Password" For="@(() => registerModel.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Margin="Margin.Dense" Class="mb-4" />
-            
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4">Register</MudButton>
-        </EditForm>
-        
-        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4">
-            Already have an account? <MudLink Href="/">Login here</MudLink>
-        </MudText>
-    </MudPaper>
-</MudContainer>
+<MudStack Class="pa-10" Style="height: 100%;">
+
+    @* Top nav bar *@
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.PieChart" Style="color: #9a8f97;" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Style="font-weight: 700; color: #2e2c2d;">PAccountant</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Outlined.PersonOutline" Style="color: #736f72;" />
+            <MudLink Href="/" Underline="Underline.None" Typo="Typo.body2"
+                     Style="font-weight: 600; color: #736f72;">Sign In</MudLink>
+        </MudStack>
+    </MudStack>
+
+    @* Centred form *@
+    <MudStack Class="flex-grow-1 align-center justify-center">
+        <MudStack Style="width: 100%; max-width: 420px;">
+
+            @* Welcome chip *@
+            <div style="display:inline-flex; align-items:center; gap:8px; background:#e9e3e6;
+                        border-radius:20px; padding:6px 14px; margin-bottom:16px; width:fit-content;">
+                <MudIcon Icon="@Icons.Material.Outlined.PersonAdd" Style="color:#9a8f97;" Size="Size.Small" />
+                <MudText Typo="Typo.caption" Style="color:#5d545b; font-weight:600;">Create your account</MudText>
+            </div>
+
+            <MudText Typo="Typo.h3" Style="font-weight: 700; letter-spacing: -1px; color: #2e2c2d;" Class="mb-2">Sign Up</MudText>
+            <MudText Typo="Typo.body2" Style="color: #736f72;" Class="mb-8">Fill in the details below to get started.</MudText>
+
+            <EditForm Model="@registerModel" OnValidSubmit="OnValidSubmit" FormName="RegisterForm">
+                <DataAnnotationsValidator />
+
+                <MudStack Row="true" Spacing="4" Class="mb-4">
+                    <MudTextField Label="First Name" @bind-Value="registerModel.FirstName"
+                                  For="@(() => registerModel.FirstName)" Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" Class="input-rounded" />
+                    <MudTextField Label="Last Name" @bind-Value="registerModel.LastName"
+                                  For="@(() => registerModel.LastName)" Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" Class="input-rounded" />
+                </MudStack>
+
+                <MudTextField Label="Email" @bind-Value="registerModel.Email"
+                              For="@(() => registerModel.Email)" Variant="Variant.Outlined"
+                              Margin="Margin.Dense" Class="mb-4 input-rounded" />
+
+                <MudTextField Label="Password" @bind-Value="registerModel.Password"
+                              For="@(() => registerModel.Password)" Variant="Variant.Outlined"
+                              InputType="InputType.Password" Margin="Margin.Dense" Class="input-rounded mb-8"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.VisibilityOff" />
+
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                           FullWidth="true" Class="btn-gradient-primary">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText>Sign Up</MudText>
+                        <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" />
+                    </MudStack>
+                </MudButton>
+            </EditForm>
+
+        </MudStack>
+    </MudStack>
+</MudStack>
+
 
 @code {
     [SupplyParameterFromForm(FormName = "RegisterForm")]                          
-    public UserCreateDTO registerModel { get; set; }
+    public UserCreateDTO registerModel { get; set; } = new();
 
     protected override void OnInitialized()
     {

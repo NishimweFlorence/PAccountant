@@ -36,10 +36,13 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Original Amount" @bind-Value="Model.OriginalAmount" For="@(() => Model.OriginalAmount)" Format="N2" Variant="Variant.Outlined" />
+                    <MudNumericField Label="Original Amount" Value="Model.OriginalAmount" ValueChanged="@((decimal v) => OnOriginalAmountChanged(v))" For="@(() => Model.OriginalAmount)" Format="N2" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Current Amount" @bind-Value="Model.CurrentAmount" For="@(() => Model.CurrentAmount)" Format="N2" Variant="Variant.Outlined" />
+                    <MudNumericField Label="Interest Rate (%)" Value="Model.InterestRate" ValueChanged="@((decimal v) => OnRateChanged(v))" For="@(() => Model.InterestRate)" Format="0.##" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Label="Current Amount" @bind-Value="Model.CurrentAmount" For="@(() => Model.CurrentAmount)" Format="N2" Variant="Variant.Outlined" ReadOnly="true" HelperText="Automatically calculated" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudDatePicker Label="Due Date" @bind-Date="NullableDueDate" Variant="Variant.Outlined" />
@@ -70,7 +73,26 @@
 
     private void Submit()
     {
+        CalculateTotal();
         OnValidSubmit();
+    }
+
+    private void OnOriginalAmountChanged(decimal value)
+    {
+        Model.OriginalAmount = value;
+        CalculateTotal();
+    }
+
+    private void OnRateChanged(decimal value)
+    {
+        Model.InterestRate = value;
+        CalculateTotal();
+    }
+
+    private void CalculateTotal()
+    {
+        Model.CurrentAmount = Model.OriginalAmount + (Model.OriginalAmount * Model.InterestRate / 100);
+        StateHasChanged();
     }
 
     private async void OnValidSubmit()
@@ -84,6 +106,7 @@
                     Type = Model.Type,
                     Currency = Model.Currency,
                     OriginalAmount = Model.OriginalAmount,
+                    InterestRate = Model.InterestRate,
                     CurrentAmount = Model.CurrentAmount,
                     DueDate = Model.DueDate,
                     CreatedAt = Model.CreatedAt

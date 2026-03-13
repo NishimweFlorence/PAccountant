@@ -1,11 +1,12 @@
-﻿namespace Application.DTO
+namespace Application.DTO
 {
     public class CreateLiabilityDTO
     {
      
-        public string Type { get; set; }
-        public string LenderName { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string LenderName { get; set; } = string.Empty;
         public decimal OriginalAmount { get; set; }
+        public decimal InterestRate { get; set; }
         public decimal CurrentAmount { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -13,8 +14,9 @@
     }
     public class UpdateLiabilityDTO
     {
-         public string Type { get; set; }
+         public string Type { get; set; } = string.Empty;
         public decimal OriginalAmount { get; set; }
+        public decimal InterestRate { get; set; }
         public decimal CurrentAmount { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime CreatedAt { get; set; }

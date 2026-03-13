@@ -3,34 +3,76 @@
 @attribute [AllowAnonymous]
 @using Infrastructure.Auth
 @using Microsoft.AspNetCore.Components.Authorization
+@using PAccountant.Components.Layout
 @layout AuthLayout
 @inject IUserService UserService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
-    <MudPaper Class="pa-8" Elevation="4">
-        <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Login</MudText>
-        
-        <EditForm Model="@loginModel" OnValidSubmit="OnValidSubmit" FormName="LoginForm">
-            <DataAnnotationsValidator />
-            
-            <MudTextField Label="Email" @bind-Value="loginModel.Email" For="@(() => loginModel.Email)" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
-            <MudTextField Label="Password" @bind-Value="loginModel.Password" For="@(() => loginModel.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Margin="Margin.Dense" Class="mb-4" />
-            
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4">Login</MudButton>
-        </EditForm>
-        
-        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4">
-            Don't have an account? <MudLink Href="/register">Register here</MudLink>
-        </MudText>
-    </MudPaper>
-</MudContainer>
+<MudStack Class="pa-10" Style="height: 100%;">
+
+    @* Top nav bar *@
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.PieChart" Style="color: #9a8f97;" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Style="font-weight: 700; color: #2e2c2d;">PAccountant</MudText>
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Outlined.PersonOutline" Style="color: #736f72;" />
+            <MudLink Href="/register" Underline="Underline.None" Typo="Typo.body2"
+                     Style="font-weight: 600; color: #736f72;">Sign Up</MudLink>
+        </MudStack>
+    </MudStack>
+
+    @* Centred form *@
+    <MudStack Class="flex-grow-1 align-center justify-center">
+        <MudStack Style="width: 100%; max-width: 380px;">
+
+            @* Welcome chip *@
+            <div style="display:inline-flex; align-items:center; gap:8px; background:#e9e3e6;
+                        border-radius:20px; padding:6px 14px; margin-bottom:16px; width:fit-content;">
+                <MudIcon Icon="@Icons.Material.Outlined.EmojiEmotions" Style="color:#9a8f97;" Size="Size.Small" />
+                <MudText Typo="Typo.caption" Style="color:#5d545b; font-weight:600;">Welcome back</MudText>
+            </div>
+
+            <MudText Typo="Typo.h3" Style="font-weight: 700; letter-spacing: -1px; color: #2e2c2d;" Class="mb-2">Sign In</MudText>
+            <MudText Typo="Typo.body2" Style="color: #736f72;" Class="mb-8">Enter your credentials to access your account.</MudText>
+
+            <EditForm Model="@loginModel" OnValidSubmit="OnValidSubmit" FormName="LoginForm">
+                <DataAnnotationsValidator />
+
+                <MudTextField Label="Email or Username" @bind-Value="loginModel.Email"
+                              For="@(() => loginModel.Email)" Variant="Variant.Outlined"
+                              Margin="Margin.Dense" Class="mb-4 input-rounded"
+                              AdornmentColor="Color.Default" />
+
+                <MudTextField Label="Password" @bind-Value="loginModel.Password"
+                              For="@(() => loginModel.Password)" Variant="Variant.Outlined"
+                              InputType="InputType.Password" Margin="Margin.Dense" Class="input-rounded"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.VisibilityOff" />
+
+                <div class="d-flex justify-start mb-8 mt-2">
+                    <MudLink Href="#" Style="color: #9a8f97; font-size: 0.8rem;" Underline="Underline.None">Forgot password?</MudLink>
+                </div>
+
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                           FullWidth="true" Class="btn-gradient-primary">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText>Sign In</MudText>
+                        <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" />
+                    </MudStack>
+                </MudButton>
+            </EditForm>
+
+        </MudStack>
+    </MudStack>
+</MudStack>
+
 
 @code {
     [SupplyParameterFromForm(FormName = "LoginForm")]                           
-    private UserLoginDTO loginModel { get; set; }
+    private UserLoginDTO loginModel { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {

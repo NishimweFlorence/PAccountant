@@ -30,6 +30,9 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal?>("Balance")
                         .HasColumnType("decimal(18,2)");
 
@@ -40,9 +43,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -58,10 +58,6 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -76,6 +72,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("PurchaseValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Rate")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
@@ -94,23 +93,146 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("CategoryId")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("TransactionCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TransactionCategoryId");
+
+                    b.ToTable("Budgets");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CustomLookup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CustomLookups");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Expense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("AssetId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Month")
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("LiabilityId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Year")
+                    b.Property<int?>("TransactionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("AccountId");
 
-                    b.ToTable("Budgets");
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("LiabilityId");
+
+                    b.HasIndex("TransactionId");
+
+                    b.ToTable("Expenses");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Income", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("AssetId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TransactionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("TransactionId");
+
+                    b.ToTable("Incomes");
                 });
 
             modelBuilder.Entity("Domain.Entities.Liability", b =>
@@ -129,6 +251,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("InterestRate")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("LenderName")
                         .IsRequired()
@@ -248,26 +373,24 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccountId")
+                    b.Property<int?>("BudgetId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("IdTransactionCategory")
-                        .HasColumnType("int");
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("IdTransactionCategory");
+                    b.HasIndex("BudgetId");
 
                     b.ToTable("Transactions");
                 });
@@ -286,6 +409,40 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TransactionCategories");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TransactionEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Credit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Debit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("TransactionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("TransactionId");
+
+                    b.ToTable("TransactionEntries");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -352,7 +509,27 @@ namespace Infrastructure.Migrations
                                 .HasForeignKey("AccountId");
                         });
 
+                    b.OwnsOne("Domain.ValueObjects.AccountType", "Type", b1 =>
+                        {
+                            b1.Property<int>("AccountId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)")
+                                .HasColumnName("Type");
+
+                            b1.HasKey("AccountId");
+
+                            b1.ToTable("Accounts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AccountId");
+                        });
+
                     b.Navigation("Currency");
+
+                    b.Navigation("Type");
                 });
 
             modelBuilder.Entity("Domain.Entities.Asset", b =>
@@ -378,19 +555,204 @@ namespace Infrastructure.Migrations
                                 .HasForeignKey("AssetId");
                         });
 
+                    b.OwnsOne("Domain.ValueObjects.AssetType", "Type", b1 =>
+                        {
+                            b1.Property<int>("AssetId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("AssetId");
+
+                            b1.ToTable("Assets");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AssetId");
+                        });
+
+                    b.OwnsOne("Domain.ValueObjects.ValueChangeType", "ValueChange", b1 =>
+                        {
+                            b1.Property<int>("AssetId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("AssetId");
+
+                            b1.ToTable("Assets");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AssetId");
+                        });
+
                     b.Navigation("Currency")
+                        .IsRequired();
+
+                    b.Navigation("Type")
+                        .IsRequired();
+
+                    b.Navigation("ValueChange")
                         .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.Budget", b =>
                 {
-                    b.HasOne("Domain.Entities.TransactionCategory", "Category")
-                        .WithMany("Budgets")
-                        .HasForeignKey("CategoryId")
+                    b.HasOne("Domain.Entities.TransactionCategory", "TransactionCategory")
+                        .WithMany()
+                        .HasForeignKey("TransactionCategoryId");
+
+                    b.Navigation("TransactionCategory");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CustomLookup", b =>
+                {
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Category");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Expense", b =>
+                {
+                    b.HasOne("Domain.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId");
+
+                    b.HasOne("Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId");
+
+                    b.HasOne("Domain.Entities.Liability", "Liability")
+                        .WithMany()
+                        .HasForeignKey("LiabilityId");
+
+                    b.HasOne("Domain.Entities.Transaction", "Transaction")
+                        .WithMany()
+                        .HasForeignKey("TransactionId");
+
+                    b.OwnsOne("Domain.ValueObjects.Currency", "Currency", b1 =>
+                        {
+                            b1.Property<int>("ExpenseId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("Symbol")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("ExpenseId");
+
+                            b1.ToTable("Expenses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExpenseId");
+                        });
+
+                    b.OwnsOne("Domain.ValueObjects.ExpenseType", "Type", b1 =>
+                        {
+                            b1.Property<int>("ExpenseId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("ExpenseId");
+
+                            b1.ToTable("Expenses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExpenseId");
+                        });
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("Currency")
+                        .IsRequired();
+
+                    b.Navigation("Liability");
+
+                    b.Navigation("Transaction");
+
+                    b.Navigation("Type")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Income", b =>
+                {
+                    b.HasOne("Domain.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId");
+
+                    b.HasOne("Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId");
+
+                    b.HasOne("Domain.Entities.Transaction", "Transaction")
+                        .WithMany()
+                        .HasForeignKey("TransactionId");
+
+                    b.OwnsOne("Domain.ValueObjects.Currency", "Currency", b1 =>
+                        {
+                            b1.Property<int>("IncomeId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("Symbol")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("IncomeId");
+
+                            b1.ToTable("Incomes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IncomeId");
+                        });
+
+                    b.OwnsOne("Domain.ValueObjects.IncomeType", "Type", b1 =>
+                        {
+                            b1.Property<int>("IncomeId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("IncomeId");
+
+                            b1.ToTable("Incomes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IncomeId");
+                        });
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("Currency")
+                        .IsRequired();
+
+                    b.Navigation("Transaction");
+
+                    b.Navigation("Type")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.Liability", b =>
@@ -468,17 +830,9 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Transaction", b =>
                 {
-                    b.HasOne("Domain.Entities.Account", "Account")
+                    b.HasOne("Domain.Entities.Budget", "Budget")
                         .WithMany("Transactions")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.TransactionCategory", "Category")
-                        .WithMany("Transactions")
-                        .HasForeignKey("IdTransactionCategory")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BudgetId");
 
                     b.OwnsOne("Domain.ValueObjects.Currency", "Currency", b1 =>
                         {
@@ -501,9 +855,7 @@ namespace Infrastructure.Migrations
                                 .HasForeignKey("TransactionId");
                         });
 
-                    b.Navigation("Account");
-
-                    b.Navigation("Category");
+                    b.Navigation("Budget");
 
                     b.Navigation("Currency")
                         .IsRequired();
@@ -534,18 +886,49 @@ namespace Infrastructure.Migrations
                     b.Navigation("Type");
                 });
 
+            modelBuilder.Entity("Domain.Entities.TransactionEntry", b =>
+                {
+                    b.HasOne("Domain.Entities.Account", "Account")
+                        .WithMany("TransactionEntries")
+                        .HasForeignKey("AccountId");
+
+                    b.HasOne("Domain.Entities.TransactionCategory", "Category")
+                        .WithMany("TransactionEntries")
+                        .HasForeignKey("CategoryId");
+
+                    b.HasOne("Domain.Entities.Transaction", "Transaction")
+                        .WithMany("Entries")
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Transaction");
+                });
+
             modelBuilder.Entity("Domain.Entities.Account", b =>
                 {
                     b.Navigation("Loans");
 
+                    b.Navigation("TransactionEntries");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Budget", b =>
+                {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Transaction", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Domain.Entities.TransactionCategory", b =>
                 {
-                    b.Navigation("Budgets");
-
-                    b.Navigation("Transactions");
+                    b.Navigation("TransactionEntries");
                 });
 #pragma warning restore 612, 618
         }

@@ -27,6 +27,7 @@
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Name</MudTh>
+                <MudTh>Account Number</MudTh>
                 <MudTh>Type</MudTh>
                 <MudTh>Balance</MudTh>
                 <MudTh>Currency</MudTh>
@@ -35,7 +36,8 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Name">@context.Name</MudTd>
-                <MudTd DataLabel="Type">@context.Type</MudTd>
+                <MudTd DataLabel="Account Number">@context.AccountNumber</MudTd>
+                <MudTd DataLabel="Type">@context.Type?.Name</MudTd>
                 <MudTd DataLabel="Balance">@context.Balance?.ToString("N2")</MudTd>
                 <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
                 <MudTd DataLabel="Status">
@@ -65,11 +67,11 @@
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true;
-        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.Name?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
             return true;
-        if (element.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.Type?.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
             return true;
-        if (element.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.Status?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
             return true;
         return false;
     }
@@ -119,7 +121,8 @@
         {
             { x => x.Model, new AccountCreateDTO { 
                 Name = account.Name, 
-                Type = account.Type, 
+                AccountNumber = account.AccountNumber,
+                Type = account.Type?.Name, 
                 Balance = account.Balance.GetValueOrDefault(), 
                 Currency = account.Currency?.Code ?? "RWF", 
                 Status = account.Status 

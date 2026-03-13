@@ -1,0 +1,129 @@
+@using Application.DTO
+@using Application.Interfaces
+@using Domain.ValueObjects
+@using Domain.Entities
+@using MudBlazor
+@inject IExpenseService ExpenseService
+@inject IAccountService AccountService
+@inject IAssetService AssetService
+@inject ILiabilityService LiabilityService
+@inject ILookupService LookupService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-3 mb-n1" />
+            Record Expense
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudNumericField Label="Amount" @bind-Value="Model.Amount" For="@(() => Model.Amount)" 
+                                     Required="true" Format="N2" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Expense Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Required="true" Variant="Variant.Outlined">
+                        @foreach (var type in ExpenseTypes)
+                        {
+                            <MudSelectItem Value="@type">@type</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Date" @bind-Date="_modelDate" Required="true" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Description" @bind-Value="Model.Description" For="@(() => Model.Description)" Required="true" Variant="Variant.Outlined" />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Source (Where money is coming from)</MudText>
+                    <MudDivider Class="mb-4" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int?" Label="From Account" @bind-Value="Model.AccountId" Clearable="true" Variant="Variant.Outlined">
+                        @foreach (var account in accounts)
+                        {
+                            <MudSelectItem Value="@((int?)account.Id)">@account.Name (@account.Balance?.ToString("N0") @account.Currency)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int?" Label="Pay Liability (Debt)" @bind-Value="Model.LiabilityId" Clearable="true" Variant="Variant.Outlined">
+                        @foreach (var liab in liabilities)
+                        {
+                            <MudSelectItem Value="@((int?)liab.Id)">@liab.LenderName (@liab.CurrentAmount.ToString("N0") @liab.Currency)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSelect T="string" Label="Currency" @bind-Value="Model.Currency" Required="true" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("RWF")">RWF</MudSelectItem>
+                        <MudSelectItem Value="@("USD")">USD</MudSelectItem>
+                        <MudSelectItem Value="@("EUR")">EUR</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Submit" Disabled="@(!success)">Record Expense</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [CascadingParameter] private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> AuthStateTask { get; set; } = default!;
+    
+    private ExpenseCreateDTO Model = new() { Date = DateTime.Now, Currency = "RWF", Type = "Food & Drinks" };
+    private DateTime? _modelDate = DateTime.Now;
+    private MudForm form = null!;
+    private bool success;
+    private List<Account> accounts = new();
+    private List<Asset> assets = new();
+    private List<Liability> liabilities = new();
+    private List<string> ExpenseTypes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await AccountService.GetAllAccountsAsync();
+        assets = await AssetService.GetAllAssetsAsync();
+        liabilities = await LiabilityService.GetAllLiabilitiesAsync();
+        
+        var defaults = new List<string> { "Food & Drinks", "Transport", "Gift Given", "Other" };
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            if (int.TryParse(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                ExpenseTypes = await LookupService.GetTypesAsync(userId, "ExpenseType", defaults);
+            }
+            else ExpenseTypes = defaults;
+        }
+        else ExpenseTypes = defaults;
+    }
+
+    private void Submit()
+    {
+        form.Validate();
+        if (success)
+        {
+            if (Model.AccountId == null && Model.LiabilityId == null)
+            {
+                Snackbar.Add("Please select either an Account or a Liability as the source.", Severity.Warning);
+                return;
+            }
+            Model.Date = _modelDate ?? DateTime.Now;
+            MudDialog.Close(DialogResult.Ok(Model));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

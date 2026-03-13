@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Application.DTO;
 using Domain.Entities;
 
@@ -11,6 +13,6 @@ namespace Application.Interfaces
         Task CreateBudgetAsync(BudgetCreateDTO budgetCreateDTO);
         Task UpdateBudgetAsync(int id, BudgetUpdateDTO budgetUpdateDTO);
         Task DeleteBudgetAsync(int id);
-        Task<List<BudgetDisplayDTO>> GetBudgetsWithUsageAsync(int month, int year);
+        Task<List<BudgetDisplayDTO>> GetBudgetsWithUsageAsync(DateTime targetDate);
     }
 }

@@ -3,6 +3,7 @@
 @using MudBlazor
 
 @inject IAssetService AssetService
+@inject ILookupService LookupService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -19,7 +20,26 @@
                     <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Required="true" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Category" @bind-Value="Model.Category" For="@(() => Model.Category)" Required="true" Variant="Variant.Outlined" />
+                    <MudSelect T="string" Label="Type" Value="@Model.Type" For="@(() => Model.Type)" Required="true" Variant="Variant.Outlined" ValueChanged="OnTypeChanged">
+                        @foreach (var t in Types)
+                        {
+                            <MudSelectItem Value="@t">@t</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Label="Purchase Value" @bind-Value="PurchaseValueProxy" Format="N2" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Value Change" Value="@Model.ValueChange" For="@(() => Model.ValueChange)" Variant="Variant.Outlined" ValueChanged="OnValueChangeChanged">
+                        @foreach (var vc in ValueChanges)
+                        {
+                            <MudSelectItem Value="@vc">@vc</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Label="Rate %" @bind-Value="Model.Rate" For="@(() => Model.Rate)" Format="N2" Variant="Variant.Outlined" TextChanged="OnCalculateValues" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudSelect T="string" Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" Required="true" Variant="Variant.Outlined">
@@ -30,13 +50,13 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Purchase Value" @bind-Value="Model.PurchaseValue" For="@(() => Model.PurchaseValue)" Format="N2" Variant="Variant.Outlined" />
+                    <MudDatePicker Label="Purchase Date" @bind-Date="NullablePurchaseDate" Variant="Variant.Outlined" TextChanged="OnCalculateValues" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField Label="Current Value" @bind-Value="Model.CurrentValue" For="@(() => Model.CurrentValue)" Format="N2" Variant="Variant.Outlined" />
+                    <MudNumericField Label="Current Value (Calculated)" Value="Model.CurrentValue" ReadOnly="true" Format="N2" Variant="Variant.Filled" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudDatePicker Label="Purchase Date" @bind-Date="NullablePurchaseDate" Variant="Variant.Outlined" />
+                    <MudDatePicker Label="Current Date" Date="DateTime.Today" ReadOnly="true" Variant="Variant.Filled" />
                 </MudItem>
             </MudGrid>
         </EditForm>
@@ -50,16 +70,96 @@
 @code {
     [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
 
+    [CascadingParameter] private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> AuthStateTask { get; set; } = default!;
+
     [Parameter] public AssetCreateDTO Model { get; set; } = new() { PurchaseDate = DateTime.Today, CreatedAt = DateTime.UtcNow };
     [Parameter] public bool IsEdit { get; set; } = false;
     [Parameter] public int AssetId { get; set; } = 0;
 
     private List<string> Currencies = new() { "RWF", "USD", "EUR" };
+    private List<string> Types = new();
+    private List<string> ValueChanges = new() { "Appreciate", "Depreciate", "None" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var defaults = new List<string> { "Land", "Vehicle", "Stock", "Bond", "Building", "Other" };
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            if (int.TryParse(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                Types = await LookupService.GetTypesAsync(userId, "AssetType", defaults);
+            }
+            else Types = defaults;
+        }
+        else Types = defaults;
+    }
 
     private DateTime? NullablePurchaseDate
     {
         get => Model.PurchaseDate == default ? DateTime.Today : Model.PurchaseDate;
-        set => Model.PurchaseDate = value ?? DateTime.Today;
+        set {
+            Model.PurchaseDate = value ?? DateTime.Today;
+        }
+    }
+
+    private void OnCalculateValues(string _) => CalculateCurrentValue();
+    private void OnCalculateValues(DateTime? _) => CalculateCurrentValue();
+
+    private void OnValueChangeChanged(string vc)
+    {
+        Model.ValueChange = vc;
+        CalculateCurrentValue();
+    }
+    
+    // Purchase value on change trigger must be handled manually since Blazor bindings don't expose onchange easily with @bind
+    private decimal PurchaseValueProxy {
+        get => Model.PurchaseValue;
+        set { Model.PurchaseValue = value; CalculateCurrentValue(); }
+    }
+
+    private void OnTypeChanged(string type)
+    {
+        Model.Type = type;
+        if (type == "Land")
+        {
+            Model.ValueChange = "Appreciate";
+            Model.Rate = 15;
+        }
+        else if (type == "Vehicle")
+        {
+            Model.ValueChange = "Depreciate";
+            Model.Rate = 20;
+        }
+        CalculateCurrentValue();
+    }
+
+    private void CalculateCurrentValue()
+    {
+        if (Model.ValueChange == "None" || Model.Rate == 0)
+        {
+            Model.CurrentValue = Model.PurchaseValue;
+            return;
+        }
+
+        var daysPassed = (DateTime.Now - Model.PurchaseDate).TotalDays;
+        if (daysPassed < 0) daysPassed = 0;
+        
+        double yearsPassed = daysPassed / 365.25;
+        double rate = (double)Model.Rate / 100.0;
+        double compoundMultiplier = 1.0;
+
+        if (Model.ValueChange == "Appreciate")
+        {
+            compoundMultiplier = Math.Pow(1.0 + rate, yearsPassed);
+        }
+        else if (Model.ValueChange == "Depreciate")
+        {
+            compoundMultiplier = Math.Pow(1.0 - rate, yearsPassed);
+            if (compoundMultiplier < 0) compoundMultiplier = 0; 
+        }
+
+        Model.CurrentValue = Model.PurchaseValue * (decimal)compoundMultiplier;
     }
 
     private void Submit()
@@ -76,10 +176,12 @@
                 var updateDto = new AssetUpdateDTO
                 {
                     Name = Model.Name,
-                    Category = Model.Category,
+                    Type = Model.Type,
                     Currency = Model.Currency,
                     PurchaseValue = Model.PurchaseValue,
                     CurrentValue = Model.CurrentValue,
+                    ValueChange = Model.ValueChange,
+                    Rate = Model.Rate,
                     PurchaseDate = Model.PurchaseDate,
                     CreatedAt = Model.CreatedAt
                 };

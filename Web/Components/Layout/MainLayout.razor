@@ -1,50 +1,53 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Infrastructure.Auth
+@using System.Security.Claims
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 
-@* Required providers *@
-<MudThemeProvider DefaultScrollbar="true" @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+@* Theme binding moved to providers in Routes, but we still need to manage dark mode state locally or via a service *@
 
 <MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Primary">
+    <MudAppBar Elevation="1" Color="Color.Primary" Dense="true">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h6" Class="ml-3">PAccountant</MudText>
         <MudSpacer />
 
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleDarkMode" />
 
-        <AuthorizeView>
-            <Authorized Context="authState">
-                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-4">
+        <AuthorizeView Context="authContext">
+            <NotAuthorized>
+                <MudLink Href="/login" Color="Color.Inherit" Class="ml-4">Login</MudLink>
+            </NotAuthorized>
+            <Authorized>
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-2" ActivationEvent="MouseEvent.LeftClick">
                     <ActivatorContent>
-                        <div class="d-flex align-center cursor-pointer">
-                            <MudText Typo="Typo.body1" Class="mr-3 d-none d-sm-block">@authState.User.Claims.FirstOrDefault(c => c.Type == "FirstName")?.Value</MudText>
-                            <MudAvatar Color="Color.Secondary" Size="Size.Medium">
-                                @if (!string.IsNullOrEmpty(authState.User.Claims.FirstOrDefault(c => c.Type == "ProfilePictureUrl")?.Value))
-                                {
-                                    <MudImage Src="@authState.User.Claims.FirstOrDefault(c => c.Type == "ProfilePictureUrl")?.Value" />
-                                }
-                                else
-                                {
-                                    @($"{authState.User.Claims.FirstOrDefault(c => c.Type == "FirstName")?.Value?[0]}{authState.User.Claims.FirstOrDefault(c => c.Type == "LastName")?.Value?[0]}")
-                                }
-                            </MudAvatar>
-                        </div>
+                        <MudButton Color="Color.Inherit" Class="profile-nav-header px-2 py-1 rounded-lg" Style="text-transform: none;">
+                            <div class="d-flex align-center">
+                                <MudAvatar Color="Color.Secondary" Size="Size.Small" Class="mr-2">
+                                    @if (!string.IsNullOrEmpty(authContext.User.Claims.FirstOrDefault(c => c.Type == "ProfilePictureUrl")?.Value))
+                                    {
+                                        <MudImage Src="@authContext.User.Claims.FirstOrDefault(c => c.Type == "ProfilePictureUrl")?.Value" />
+                                    }
+                                    else
+                                    {
+                                        @($"{authContext.User.Claims.FirstOrDefault(c => c.Type == "FirstName")?.Value?[0]}{authContext.User.Claims.FirstOrDefault(c => c.Type == "LastName")?.Value?[0]}")
+                                    }
+                                </MudAvatar>
+                                <div class="flex-grow-1 overflow-hidden d-none d-sm-block">
+                                    <MudText Typo="Typo.body2" Class="text-truncate" Style="font-weight: 500;">@authContext.User.Claims.FirstOrDefault(c => c.Type == "FirstName")?.Value @authContext.User.Claims.FirstOrDefault(c => c.Type == "LastName")?.Value</MudText>
+                                </div>
+                                <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Class="ml-1" />
+                            </div>
+                        </MudButton>
                     </ActivatorContent>
                     <ChildContent>
-                        <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick="@(() => NavigationManager.NavigateTo("/profile"))">My Profile</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick="@(() => NavigationManager.NavigateTo("/profile"))">View Profile</MudMenuItem>
+                        <MudDivider />
                         <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Logout</MudMenuItem>
                     </ChildContent>
                 </MudMenu>
             </Authorized>
-            <NotAuthorized>
-                <MudLink Href="/login" Color="Color.Inherit" Class="ml-4">Login</MudLink>
-            </NotAuthorized>
         </AuthorizeView>
     </MudAppBar>
 
@@ -53,15 +56,39 @@
     </MudDrawer>
 
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4 pt-4">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4 pt-4 mb-16">
             @Body
         </MudContainer>
     </MudMainContent>
+
+    <MudAppBar Bottom="true" Fixed="true" Elevation="1" Color="Color.Surface" Class="justify-center foot-bar">
+        <MudText Typo="Typo.body2" Align="Align.Center">
+            @copyright All right reserved 2026<br />developed by NATI Developers
+        </MudText>
+    </MudAppBar>
 </MudLayout>
+
+<style>
+    .profile-nav-header:hover {
+        background-color: rgba(255,255,255,0.1);
+    }
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .foot-bar {
+        border-top: 1px solid var(--mud-palette-divider);
+        padding-top: 8px;
+        padding-bottom: 8px;
+        height: auto;
+    }
+</style>
 
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = false;
+    private const string copyright = "©";
 
     private async Task Logout()
     {
@@ -74,27 +101,41 @@
     {
         PaletteLight = new PaletteLight()
         {
-            Primary = "#1E88E5",
-            Secondary = "#42A5F5",
-            AppbarBackground = "#1E88E5",
-            AppbarText = Colors.Shades.White,
-            Background = "#F5F7F9",
-            DrawerBackground = Colors.Shades.White,
-            TextPrimary = "#2C3E50",
-            Surface = Colors.Shades.White
+            Primary = "#415a77", /* dusk_blue */
+            Secondary = "#778da9", /* dusty_denim */
+            Tertiary = "#1b263b", /* prussian_blue */
+            AppbarBackground = "#1b263b", /* prussian_blue */
+            AppbarText = "#e0e1dd", /* alabaster_grey */
+            Background = "#f9f9f8", /* alabaster_grey 900 */
+            DrawerBackground = "#e0e1dd", /* alabaster_grey */
+            DrawerText = "#0d1b2a", /* ink_black */
+            TextPrimary = "#0d1b2a", /* ink_black */
+            TextSecondary = "#415a77", /* dusk_blue */
+            Surface = "#ffffff",
+            ActionDefault = "#0d1b2a",
+            ActionDisabled = "#b4b6ad",
+            ActionDisabledBackground = "#ececea"
         },
         PaletteDark = new PaletteDark()
         {
-            Primary = "#42A5F5",
-            Background = "#0F172A",
-            Surface = "#1E293B",
-            DrawerBackground = "#1E293B",
-            AppbarBackground = "#1E293B",
-            TextPrimary = "#F8FAFC"
+            Primary = "#778da9", /* dusty_denim */
+            Secondary = "#415a77", /* dusk_blue */
+            Tertiary = "#a1b8d6", 
+            Background = "#0d1b2a", /* ink_black */
+            Surface = "#1b263b", /* prussian_blue */
+            DrawerBackground = "#1b263b", /* prussian_blue */
+            DrawerText = "#e0e1dd", /* alabaster_grey */
+            AppbarBackground = "#08111a", /* ink_black 300 */
+            AppbarText = "#e0e1dd", /* alabaster_grey */
+            TextPrimary = "#e0e1dd", /* alabaster_grey */
+            TextSecondary = "#778da9", /* dusty_denim */
+            ActionDefault = "#e0e1dd",
+            ActionDisabled = "#5b5e53",
+            ActionDisabledBackground = "#2e2f2a"
         },
         LayoutProperties = new LayoutProperties()
         {
-            DefaultBorderRadius = "12px"
+            DefaultBorderRadius = "8px"
         }
     };
 

@@ -1,0 +1,136 @@
+@page "/balancesheet"
+@using Application.DTO
+@using Application.Interfaces
+@using Microsoft.JSInterop
+@inject IReportingService ReportingService
+@inject IJSRuntime JS
+
+<PageTitle>Balance Sheet</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Balance Sheet</MudText>
+
+<MudPaper Class="pa-4 mb-4" Elevation="3">
+    <MudGrid>
+        <MudItem xs="12" sm="10">
+            <MudDatePicker Label="As Of Date" @bind-Date="AsOfDate" />
+        </MudItem>
+        <MudItem xs="12" sm="2" Class="d-flex align-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync">Generate</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (IsLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (Report != null)
+{
+    <MudPaper Class="pa-4" Elevation="3">
+        <MudGrid>
+            <!-- ASSETS -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="0" Class="pa-3 mb-4 rounded" style="border: 1px solid var(--mud-palette-lines-default)">
+                    <MudText Typo="Typo.h5" GutterBottom="true" Color="Color.Primary">Assets</MudText>
+                    @foreach (var line in Report.Assets)
+                    {
+                        <div class="d-flex justify-space-between py-1">
+                            <MudText>@line.Name</MudText>
+                            <MudText>@line.Amount.ToString("C")</MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between py-1">
+                        <MudText Typo="Typo.subtitle1"><b>Total Assets</b></MudText>
+                        <MudText Typo="Typo.subtitle1"><b>@Report.TotalAssets.ToString("C")</b></MudText>
+                    </div>
+                </MudCard>
+            </MudItem>
+
+            <!-- LIABILITIES & EQUITY -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="0" Class="pa-3 mb-4 rounded" style="border: 1px solid var(--mud-palette-lines-default)">
+                    <MudText Typo="Typo.h5" GutterBottom="true" Color="Color.Secondary">Liabilities</MudText>
+                    @foreach (var line in Report.Liabilities)
+                    {
+                        <div class="d-flex justify-space-between py-1">
+                            <MudText>@line.Name</MudText>
+                            <MudText>@line.Amount.ToString("C")</MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between py-1">
+                        <MudText Typo="Typo.subtitle1"><b>Total Liabilities</b></MudText>
+                        <MudText Typo="Typo.subtitle1"><b>@Report.TotalLiabilities.ToString("C")</b></MudText>
+                    </div>
+
+                    <MudDivider Class="my-3 border-dashed" />
+
+                    <MudText Typo="Typo.h5" GutterBottom="true" Color="Color.Info">Equity</MudText>
+                    @foreach (var line in Report.Equity)
+                    {
+                        <div class="d-flex justify-space-between py-1">
+                            <MudText>@line.Name</MudText>
+                            <MudText>@line.Amount.ToString("C")</MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between py-1">
+                        <MudText Typo="Typo.subtitle1"><b>Total Equity</b></MudText>
+                        <MudText Typo="Typo.subtitle1"><b>@Report.TotalEquity.ToString("C")</b></MudText>
+                    </div>
+                </MudCard>
+
+                <!-- L&E TOTAL -->
+                <MudCard Elevation="0" Class="pa-3 mt-4 rounded" style="background-color: var(--mud-palette-background-grey)">
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText Typo="Typo.h6"><b>Total Liabilities & Equity</b></MudText>
+                        <MudText Typo="Typo.h6">
+                            <b>@((Report.TotalLiabilities + Report.TotalEquity).ToString("C"))</b>
+                        </MudText>
+                    </div>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportExcelAsync">Download Excel View</MudButton>
+    </MudPaper>
+}
+
+@code {
+    private DateTime? AsOfDate { get; set; } = DateTime.Now;
+    private BalanceSheetDTO? Report { get; set; }
+    private bool IsLoading { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            if (AsOfDate.HasValue)
+            {
+                Report = await ReportingService.GetBalanceSheetAsync(AsOfDate.Value);
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ExportExcelAsync()
+    {
+        if (AsOfDate.HasValue)
+        {
+            var excelData = await ReportingService.ExportBalanceSheetToExcelAsync(AsOfDate.Value);
+            var base64 = Convert.ToBase64String(excelData);
+            await JS.InvokeVoidAsync("downloadFileFromStream", "BalanceSheet.xlsx", base64);
+        }
+    }
+}

@@ -33,10 +33,11 @@ namespace Infrastructure.Repositories
                 Type = LiabilityDTO.Type,
                 LenderName = LiabilityDTO.LenderName,
                 OriginalAmount = LiabilityDTO.OriginalAmount,
+                InterestRate = LiabilityDTO.InterestRate,
                 CurrentAmount = LiabilityDTO.CurrentAmount,
                 DueDate = LiabilityDTO.DueDate,
                 CreatedAt = LiabilityDTO.CreatedAt,
-                Currency      = Currency.FromCode(LiabilityDTO.Currency)
+                Currency = Currency.FromCode(LiabilityDTO.Currency)
             };
             _context.Liabilities.Add(liability);
             await _context.SaveChangesAsync();
@@ -49,9 +50,10 @@ namespace Infrastructure.Repositories
             {
                 liability.Type = LiabilityDTO.Type;
                 liability.OriginalAmount = LiabilityDTO.OriginalAmount;
+                liability.InterestRate = LiabilityDTO.InterestRate;
                 liability.CurrentAmount = LiabilityDTO.CurrentAmount;
                 liability.DueDate = LiabilityDTO.DueDate;
-                liability.Currency       = Currency.FromCode(LiabilityDTO.Currency);
+                liability.Currency = Currency.FromCode(LiabilityDTO.Currency);
                 await _context.SaveChangesAsync();
             }
         }

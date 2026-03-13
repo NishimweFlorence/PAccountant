@@ -6,7 +6,7 @@ namespace Application.Interfaces
 {
     public interface ITransaction
     {
-        Task<Transaction> GetTransactionByIdAsync(int Id);
+        Task<Transaction?> GetTransactionByIdAsync(int Id);
         Task<List<Transaction>> GetAllTransactionsAsync();
         Task CreateTransactionAsync(CreateTransactionDTO TransactionDTO);
         Task UpdateTransactionAsync(int Id, UpdateTransactionDTO TransactionDTO);

@@ -4,6 +4,7 @@ namespace Application.DTO
     {
        
         public string? Name { get; set; }
+        public string? AccountNumber { get; set; }
         public string? Type { get; set; }
         public decimal Balance {get;set;}
         public string? Currency {get;set;}
@@ -13,6 +14,7 @@ namespace Application.DTO
     public class AccountUpdateDTO
     {
         public string? Name { get; set; }
+        public string? AccountNumber { get; set; }
         public string? Type { get; set; }
         public decimal Balance {get;set;}
         public string? Status {get;set;}

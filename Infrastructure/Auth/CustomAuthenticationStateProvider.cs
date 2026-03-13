@@ -8,53 +8,24 @@ namespace Infrastructure.Auth
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private readonly ProtectedLocalStorage _sessionStorage;
         private readonly IUserService _userService;
-        private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
+        private ClaimsPrincipal _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
 
-        public CustomAuthenticationStateProvider(ProtectedLocalStorage sessionStorage, IUserService userService)
+        public CustomAuthenticationStateProvider(IUserService userService)
         {
-            _sessionStorage = sessionStorage;
             _userService = userService;
         }
 
-        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+        public override Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            try
-            {
-                var userSessionResult = await _sessionStorage.GetAsync<UserSession>("UserSession");
-                var userSession = userSessionResult.Success ? userSessionResult.Value : null;
-
-                if (userSession == null)
-                {
-                    return await Task.FromResult(new AuthenticationState(_anonymous));
-                }
-
-                var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, userSession.Email),
-                    new Claim(ClaimTypes.Role, "User"),
-                    new Claim("FirstName", userSession.FirstName),
-                    new Claim("LastName", userSession.LastName),
-                    new Claim("ProfilePictureUrl", userSession.ProfilePictureUrl ?? string.Empty)
-                }, "CustomAuth"));
-
-                return await Task.FromResult(new AuthenticationState(claimsPrincipal));
-            }
-            catch
-            {
-                return await Task.FromResult(new AuthenticationState(_anonymous));
-            }
+            return Task.FromResult(new AuthenticationState(_currentUser));
         }
 
         public async Task UpdateAuthenticationState(UserSession? userSession)
         {
-            ClaimsPrincipal claimsPrincipal;
-
             if (userSession != null)
             {
-                await _sessionStorage.SetAsync("UserSession", userSession);
-                claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+                _currentUser = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, userSession.Email),
                     new Claim(ClaimTypes.Role, "User"),
@@ -65,16 +36,16 @@ namespace Infrastructure.Auth
             }
             else
             {
-                await _sessionStorage.DeleteAsync("UserSession");
-                claimsPrincipal = _anonymous;
+                _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
             }
 
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
+            await Task.CompletedTask;
         }
     }
 
     public class UserSession
-    {
+    {   
         public int Id { get; set; }
         public required string Email { get; set; }
         public required string FirstName { get; set; }

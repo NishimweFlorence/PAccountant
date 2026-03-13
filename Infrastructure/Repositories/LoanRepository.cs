@@ -72,6 +72,38 @@ namespace Infrastructure.Repositories
             };
 
             await _dbContext.Loans.AddAsync(loan);
+
+            // Create Double-Entry Auto-Transaction
+            var loanAssetCat = await _dbContext.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Loan Asset");
+            if (loanAssetCat == null)
+            {
+                loanAssetCat = new TransactionCategory { Name = "Loan Asset", Type = TransactionType.FromString("Asset") };
+                _dbContext.TransactionCategories.Add(loanAssetCat);
+                await _dbContext.SaveChangesAsync(); // Ensure category ID is generated
+            }
+
+            var transaction = new Transaction
+            {
+                TransactionDate = loanDTO.LoanDate ?? DateTime.Now,
+                Description = $"Loan Disbursed to {loanDTO.Borrower}",
+                Currency = Currency.FromCode(loan.Currency.Code),
+                CreatedAt = DateTime.Now,
+                Entries = new List<TransactionEntry>
+                {
+                    new TransactionEntry { AccountId = loanDTO.AccountId, Debit = 0, Credit = loanDTO.Amount }, // Decrease bank
+                    new TransactionEntry { CategoryId = loanAssetCat.Id, Debit = loanDTO.Amount, Credit = 0 }   // Increase loan asset
+                }
+            };
+            _dbContext.Transactions.Add(transaction);
+
+            // Update source Account Balance
+            var account = await _dbContext.Accounts.FindAsync(loanDTO.AccountId);
+            if (account != null)
+            {
+                account.Balance -= loanDTO.Amount;
+                _dbContext.Accounts.Update(account);
+            }
+
             await _dbContext.SaveChangesAsync();
             
             loanDTO.Id = loan.Id;

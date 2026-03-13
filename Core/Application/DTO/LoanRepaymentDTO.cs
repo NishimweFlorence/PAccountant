@@ -7,7 +7,7 @@ namespace Application.DTO
         public int AccountId { get; set; }
         public decimal Amount { get; set; }
         public DateTime? RepaymentDate { get; set; }
-        public string Note { get; set; }
+        public string Note { get; set; } = string.Empty;
     }
 
     public class LoanRepaymentUpdateDTO
@@ -17,7 +17,7 @@ namespace Application.DTO
         public int AccountId { get; set; }
         public decimal Amount { get; set; }
         public DateTime? RepaymentDate { get; set; }
-        public string Note { get; set; }
+        public string Note { get; set; } = string.Empty;
     }
 
     public class LoanRepaymentDeleteDTO

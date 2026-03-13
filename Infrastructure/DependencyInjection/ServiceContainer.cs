@@ -25,6 +25,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IAsset, AssetRepository>();
             services.AddScoped<IUser, UserRepository>();
             services.AddScoped<IBudget, BudgetRepository>();
+            services.AddScoped<IIncome, IncomeRepository>();
+            services.AddScoped<IExpense, ExpenseRepository>();
         }
     }
 }

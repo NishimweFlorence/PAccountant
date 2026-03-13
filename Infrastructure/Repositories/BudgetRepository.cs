@@ -32,10 +32,11 @@ namespace Infrastructure.Repositories
         {
             var budget = new Budget
             {
-                CategoryId = budgetCreateDTO.CategoryId,
+                Name       = budgetCreateDTO.Name,
                 Amount     = budgetCreateDTO.Amount,
-                Month      = budgetCreateDTO.Month,
-                Year       = budgetCreateDTO.Year,
+                StartDate  = budgetCreateDTO.StartDate,
+                EndDate    = budgetCreateDTO.EndDate,
+                TransactionCategoryId = budgetCreateDTO.CategoryId,
                 CreatedAt  = System.DateTime.Now
             };
             _context.Budgets.Add(budget);
@@ -47,9 +48,11 @@ namespace Infrastructure.Repositories
             var budget = await _context.Budgets.FindAsync(id);
             if (budget != null)
             {
-                budget.Amount = budgetUpdateDTO.Amount;
-                budget.Month  = budgetUpdateDTO.Month;
-                budget.Year   = budgetUpdateDTO.Year;
+                budget.Name      = budgetUpdateDTO.Name;
+                budget.Amount    = budgetUpdateDTO.Amount;
+                budget.StartDate = budgetUpdateDTO.StartDate;
+                budget.EndDate   = budgetUpdateDTO.EndDate;
+                budget.TransactionCategoryId = budgetUpdateDTO.CategoryId;
                 await _context.SaveChangesAsync();
             }
         }

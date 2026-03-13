@@ -8,8 +8,7 @@ namespace Domain.Entities
         public string? Name { get; set; }
         public TransactionType? Type { get; set; }
        
-        public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
-        public virtual ICollection<Budget> Budgets { get; set; } = new List<Budget>();
+        public virtual ICollection<TransactionEntry> TransactionEntries { get; set; } = new List<TransactionEntry>();
 
         /// Audit fields
         

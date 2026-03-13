@@ -4,15 +4,21 @@
 @using MudBlazor
 
 @inject ITransactionService TransactionService
+@inject ITransactionPdfService TransactionPdfService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 
 <PageTitle>Transaction Details</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudPaper Class="pa-6">
-        <div class="d-flex align-center mb-4">
-            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/transactions"))" Class="mr-2" />
-            <MudText Typo="Typo.h5">Transaction Details</MudText>
+    <MudPaper Class="pa-6" Elevation="4" Style="border-radius: 12px; overflow: hidden;">
+        <div class="d-flex align-center justify-space-between mb-6">
+            <div class="d-flex align-center">
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/transactions"))" Class="mr-2" />
+                <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 600;">Transaction Receipt</MudText>
+            </div>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="DownloadPdf" Disabled="@(transaction == null)">Download PDF</MudButton>
         </div>
 
         @if (transaction == null)
@@ -22,20 +28,81 @@
         else
         {
             <MudGrid>
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.subtitle1"><b>Transaction ID:</b> #@transaction.Id</MudText>
-                    <MudText Typo="Typo.subtitle1"><b>Account ID:</b> @transaction.AccountId</MudText>
-                    <MudText Typo="Typo.subtitle1"><b>Category ID:</b> @transaction.IdTransactionCategory</MudText>
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey); border-left: 4px solid var(--mud-palette-primary);">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">TRANSACTION ID</MudText>
+                                <MudText Typo="Typo.body1" Style="font-weight: 500;">#@transaction.Id</MudText>
+                                
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 d-block">DATE</MudText>
+                                <MudText Typo="Typo.body1">@transaction.TransactionDate.ToString("dd MMM yyyy")</MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">DESCRIPTION</MudText>
+                                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(transaction.Description) ? "No description" : transaction.Description)</MudText>
+                                
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 d-block">REFERENCE NUMBER</MudText>
+                                <MudText Typo="Typo.body1">@(string.IsNullOrWhiteSpace(transaction.ReferenceNumber) ? "-" : transaction.ReferenceNumber)</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
                 </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudText Typo="Typo.subtitle1"><b>Amount:</b> <MudText Color="Color.Primary" Inline="true">@transaction.Amount.ToString("N2") @transaction.Currency</MudText></MudText>
-                    <MudText Typo="Typo.subtitle1"><b>Date:</b> @transaction.TransactionDate.ToString("dd MMM yyyy")</MudText>
-                    <MudText Typo="Typo.subtitle1"><b>Created At:</b> @transaction.CreatedAt.ToString("dd MMM yyyy, HH:mm")</MudText>
+
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Primary">Flow of Funds</MudText>
+                    <MudGrid>
+                        @* Source of Funds (Credit) *@
+                        <MudItem xs="12" md="5">
+                            <MudPaper Class="pa-4 mud-height-full" Elevation="0" Style="border: 1px dashed var(--mud-palette-error); background: rgba(var(--mud-palette-error-rgb), 0.05);">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Error" Class="mb-2">SOURCE (FROM)</MudText>
+                                @foreach (var entry in transaction.Entries.Where(e => e.Credit > 0))
+                                {
+                                    <div class="d-flex justify-space-between mb-1">
+                                        <MudText Typo="Typo.body2">@(entry.Account?.Name ?? entry.Category?.Name ?? "External")</MudText>
+                                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@entry.Credit.ToString("N2")</MudText>
+                                    </div>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Arrow Icon *@
+                        <MudItem xs="12" md="2" Class="d-flex align-center justify-center">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Color="Color.Primary" Size="Size.Large" Class="d-none d-md-block" />
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowDownward" Color="Color.Primary" Size="Size.Large" Class="d-block d-md-none" />
+                        </MudItem>
+
+                        @* Destination of Funds (Debit) *@
+                        <MudItem xs="12" md="5">
+                            <MudPaper Class="pa-4 mud-height-full" Elevation="0" Style="border: 1px dashed var(--mud-palette-success); background: rgba(var(--mud-palette-success-rgb), 0.05);">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="mb-2">DESTINATION (TO)</MudText>
+                                @foreach (var entry in transaction.Entries.Where(e => e.Debit > 0))
+                                {
+                                    <div class="d-flex justify-space-between mb-1">
+                                        <MudText Typo="Typo.body2">@(entry.Account?.Name ?? entry.Category?.Name ?? "-")</MudText>
+                                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@entry.Debit.ToString("N2")</MudText>
+                                    </div>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+
+                <MudItem xs="12" Class="mt-4">
+                    <MudDivider Class="mb-4" />
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Digitally Signed by</MudText>
+                            <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">@signedByName</MudText>
+                        </div>
+                        <div class="text-right">
+                            <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight: 700;">
+                                @transaction.Entries.Sum(e => e.Debit).ToString("N2") @transaction.Currency?.Code
+                            </MudText>
+                        </div>
+                    </div>
                 </MudItem>
             </MudGrid>
-            <div class="mt-6 d-flex justify-end">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/transactions"))">Back to List</MudButton>
-            </div>
         }
     </MudPaper>
 </MudContainer>
@@ -43,10 +110,35 @@
 @code
 {
     [Parameter] public int Id { get; set; }
-    public TransactionEntity? transaction;
+    private TransactionEntity? transaction;
+    private string signedByName = "Authorized User";
 
     protected override async Task OnInitializedAsync()
     {
         transaction = await TransactionService.GetTransactionByIdAsync(Id);
+        
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var firstName = user.FindFirst("FirstName")?.Value;
+            var lastName = user.FindFirst("LastName")?.Value;
+            if (!string.IsNullOrEmpty(firstName))
+                signedByName = $"{firstName} {lastName}";
+            else
+                signedByName = user.Identity.Name ?? "Authorized User";
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        if (transaction == null) return;
+
+        var pdfBytes = await TransactionPdfService.GenerateTransactionPdfAsync(transaction, signedByName);
+        
+        var fileName = $"Transaction_{transaction.Id}_{DateTime.Now:yyyyMMdd}.pdf";
+        var base64 = Convert.ToBase64String(pdfBytes);
+        
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "application/pdf", base64);
     }
 }

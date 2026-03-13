@@ -29,7 +29,7 @@
 
                         <MudStack Spacing="2">
                             <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" />
-                            <MudTextField Label="Category" @bind-Value="Model.Category" For="@(() => Model.Category)" />
+                            <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" />
                             <MudTextField Label="Current Value" @bind-Value="Model.CurrentValue" For="@(() => Model.CurrentValue)" />
                             <MudTextField Label="Currency" @bind-Value="Model.Currency" For="@(() => Model.Currency)" />
                             <MudTextField Label="Purchase Date" @bind-Value="Model.PurchaseDate" For="@(() => Model.PurchaseDate)" />
@@ -57,7 +57,7 @@
             Model = new AssetUpdateDTO
             {
                 Name = asset.Name ?? "",
-                Category = asset.Category ?? "",
+                Type = asset.Type?.Name ?? "Other",
                 CurrentValue = asset.CurrentValue,
                 PurchaseValue= asset.PurchaseValue,
                 PurchaseDate = asset.PurchaseDate,

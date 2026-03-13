@@ -20,6 +20,16 @@ namespace Application.DTO
         public List<AssetSummaryDTO>     Assets      { get; set; } = new();
         public List<LoanSummaryDTO>      LoansGiven  { get; set; } = new();
         public List<LiabilitySummaryDTO> Liabilities { get; set; } = new();
+        public List<NetWorthTrendPointDTO> Trends    { get; set; } = new();
+    }
+
+    public class NetWorthTrendPointDTO
+    {
+        public string Month       { get; set; } = string.Empty;
+        public decimal Accounts   { get; set; }
+        public decimal Assets     { get; set; }
+        public decimal Liabilities { get; set; }
+        public decimal NetWorth   { get; set; }
     }
 
     public class AccountSummaryDTO
@@ -36,7 +46,7 @@ namespace Application.DTO
     {
         public int     Id           { get; set; }
         public string  Name         { get; set; } = string.Empty;
-        public string  Category     { get; set; } = string.Empty;
+        public string  Type         { get; set; } = string.Empty;
         public decimal CurrentValue { get; set; }
         public string  Currency     { get; set; } = string.Empty;
     }

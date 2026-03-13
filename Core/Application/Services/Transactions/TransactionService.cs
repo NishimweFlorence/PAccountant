@@ -3,6 +3,8 @@ using Application.DTO;
 using Application.Interfaces;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace Application.Services.Transactions
 {
@@ -34,25 +36,34 @@ namespace Application.Services.Transactions
 
         public async Task CreateTransactionAsync(CreateTransactionDTO transactionDTO)
         {
-            // 1. Get Category Effect
-            var category = await _categoryRepository.GetTransactionCategoryByIdAsync(transactionDTO.IdTransactionCategory);
-            int effect = category?.Type?.Effect ?? 0;
-
-            // 2. Update Account Balance
-            var account = await _accountRepository.GetAccountByIdAsync(transactionDTO.AccountId);
-            if (account != null && effect != 0)
+            // 1. Validate Atomic Balance Rule
+            decimal totalDebits = transactionDTO.Entries.Sum(e => e.Debit);
+            decimal totalCredits = transactionDTO.Entries.Sum(e => e.Credit);
+            if (totalDebits != totalCredits)
             {
-                account.Balance = (account.Balance ?? 0) + (transactionDTO.Amount * effect);
-                await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
-                { 
-                    Name = account.Name,
-                    Type = account.Type,
-                    Balance = account.Balance.GetValueOrDefault(),
-                    Status = account.Status
-                });
+                throw new InvalidOperationException("Transaction is unbalanced. Total debits must equal total credits.");
+            }
+
+            // 2. Update Account Balances
+            foreach (var entry in transactionDTO.Entries.Where(e => e.AccountId.HasValue))
+            {
+                var account = await _accountRepository.GetAccountByIdAsync(entry.AccountId!.Value);
+                if (account != null)
+                {
+                    // Assuming typical Asset account representation: Balance += (Debit - Credit)
+                    account.Balance = (account.Balance ?? 0) + (entry.Debit - entry.Credit);
+                    await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
+                    { 
+                        Name = account.Name,
+                        Type = account.Type?.Name,
+                        Balance = account.Balance.GetValueOrDefault(),
+                        Status = account.Status
+                    });
+                }
             }
 
             // 3. Create Transaction
+            transactionDTO.CreatedAt = DateTime.UtcNow;
             await _transactionRepository.CreateTransactionAsync(transactionDTO);
         }
 
@@ -61,39 +72,51 @@ namespace Application.Services.Transactions
             var oldTransaction = await _transactionRepository.GetTransactionByIdAsync(id);
             if (oldTransaction == null) return;
 
-            // 1. Reverse old effect
-            var oldCategory = await _categoryRepository.GetTransactionCategoryByIdAsync(oldTransaction.IdTransactionCategory);
-            int oldEffect = oldCategory?.Type?.Effect ?? 0;
-            var oldAccount = await _accountRepository.GetAccountByIdAsync(oldTransaction.AccountId);
-            if (oldAccount != null && oldEffect != 0)
+            // 1. Validate Atomic Balance Rule
+            decimal totalDebits = transactionDTO.Entries.Sum(e => e.Debit);
+            decimal totalCredits = transactionDTO.Entries.Sum(e => e.Credit);
+            if (totalDebits != totalCredits)
             {
-                oldAccount.Balance = (oldAccount.Balance ?? 0) - (oldTransaction.Amount * oldEffect);
-                await _accountRepository.UpdateAccountAsync(oldAccount.Id, new AccountUpdateDTO 
-                { 
-                    Name = oldAccount.Name,
-                    Type = oldAccount.Type,
-                    Balance = oldAccount.Balance.GetValueOrDefault(),
-                    Status = oldAccount.Status
-                });
+                throw new InvalidOperationException("Transaction is unbalanced. Total debits must equal total credits.");
             }
 
-            // 2. Apply new effect
-            var newCategory = await _categoryRepository.GetTransactionCategoryByIdAsync(transactionDTO.IdTransactionCategory);
-            int newEffect = newCategory?.Type?.Effect ?? 0;
-            var newAccount = await _accountRepository.GetAccountByIdAsync(transactionDTO.AccountId);
-            if (newAccount != null && newEffect != 0)
+            // 2. Reverse old effect
+            foreach (var oldEntry in oldTransaction.Entries.Where(e => e.AccountId.HasValue))
             {
-                newAccount.Balance = (newAccount.Balance ?? 0) + (transactionDTO.Amount * newEffect);
-                await _accountRepository.UpdateAccountAsync(newAccount.Id, new AccountUpdateDTO 
-                { 
-                    Name = newAccount.Name,
-                    Type = newAccount.Type,
-                    Balance = newAccount.Balance.GetValueOrDefault(),
-                    Status = newAccount.Status
-                });
+                var account = await _accountRepository.GetAccountByIdAsync(oldEntry.AccountId!.Value);
+                if (account != null)
+                {
+                    // Reverse Asset logic: Balance -= (Debit - Credit)
+                    account.Balance = (account.Balance ?? 0) - (oldEntry.Debit - oldEntry.Credit);
+                    await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
+                    { 
+                        Name = account.Name,
+                        Type = account.Type?.Name,
+                        Balance = account.Balance.GetValueOrDefault(),
+                        Status = account.Status
+                    });
+                }
             }
 
-            // 3. Update Transaction
+            // 3. Apply new effect
+            foreach (var entry in transactionDTO.Entries.Where(e => e.AccountId.HasValue))
+            {
+                var account = await _accountRepository.GetAccountByIdAsync(entry.AccountId!.Value);
+                if (account != null)
+                {
+                    // Apply Asset logic: Balance += (Debit - Credit)
+                    account.Balance = (account.Balance ?? 0) + (entry.Debit - entry.Credit);
+                    await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
+                    { 
+                        Name = account.Name,
+                        Type = account.Type?.Name,
+                        Balance = account.Balance.GetValueOrDefault(),
+                        Status = account.Status
+                    });
+                }
+            }
+
+            // 4. Update Transaction
             await _transactionRepository.UpdateTransactionAsync(id, transactionDTO);
         }
 
@@ -103,19 +126,21 @@ namespace Application.Services.Transactions
             if (transaction == null) return;
 
             // 1. Reverse effect
-            var category = await _categoryRepository.GetTransactionCategoryByIdAsync(transaction.IdTransactionCategory);
-            int effect = category?.Type?.Effect ?? 0;
-            var account = await _accountRepository.GetAccountByIdAsync(transaction.AccountId);
-            if (account != null && effect != 0)
+            foreach (var oldEntry in transaction.Entries.Where(e => e.AccountId.HasValue))
             {
-                account.Balance = (account.Balance ?? 0) - (transaction.Amount * effect);
-                await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
-                { 
-                    Name = account.Name,
-                    Type = account.Type,
-                    Balance = account.Balance.GetValueOrDefault(),
-                    Status = account.Status
-                });
+                var account = await _accountRepository.GetAccountByIdAsync(oldEntry.AccountId!.Value);
+                if (account != null)
+                {
+                    // Reverse Asset logic: Balance -= (Debit - Credit)
+                    account.Balance = (account.Balance ?? 0) - (oldEntry.Debit - oldEntry.Credit);
+                    await _accountRepository.UpdateAccountAsync(account.Id, new AccountUpdateDTO 
+                    { 
+                        Name = account.Name,
+                        Type = account.Type?.Name,
+                        Balance = account.Balance.GetValueOrDefault(),
+                        Status = account.Status
+                    });
+                }
             }
 
             // 2. Delete Transaction

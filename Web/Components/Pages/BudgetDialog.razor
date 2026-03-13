@@ -9,36 +9,26 @@
     <DialogContent>
         <MudForm @ref="form">
             <MudGrid>
-                @if (!IsEdit)
-                {
-                    <MudItem xs="12">
-                        <MudSelect T="int?" Label="Category*"
-                                   @bind-Value="SelectedCategoryId"
-                                   Placeholder="Select a category"
-                                   Required="true"
-                                   AnchorOrigin="Origin.BottomCenter"
-                                   Variant="Variant.Outlined">
-                            @foreach (var cat in Categories)
-                            {
-                                <MudSelectItem T="int?" Value="@((int?)cat.Id)">@cat.Name</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                }
-                else
-                {
-                    <MudItem xs="12">
-                        <MudTextField Value="@CategoryName"
-                                      Label="Category"
-                                      ReadOnly="true"
-                                      Variant="Variant.Outlined"
-                                      Disabled="true" />
-                    </MudItem>
-                }
+                <MudItem xs="12">
+                    <MudSelect T="int?" Label="Expense Category (Optional)" @bind-Value="CategoryId" Variant="Variant.Outlined" Clearable="true">
+                        <MudSelectItem T="int?" Value="null">None (General Budget)</MudSelectItem>
+                        @foreach (var cat in categories.Where(c => c.Type == Domain.ValueObjects.TransactionType.Expense))
+                        {
+                            <MudSelectItem T="int?" Value="@cat.Id">@cat.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Name"
+                                  Label="Budget Name*"
+                                  Required="true"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
 
                 <MudItem xs="12">
                     <MudNumericField T="decimal"
-                                     Label="Monthly Budget Amount*"
+                                     Label="Budget Amount*"
                                      @bind-Value="Amount"
                                      Required="true"
                                      Format="N0"
@@ -47,33 +37,17 @@
                 </MudItem>
 
                 <MudItem xs="6">
-                    <MudSelect T="int?"
-                               Label="Month*"
-                               @bind-Value="SelectedMonth"
-                               Placeholder="Select month"
-                               Required="true"
-                               AnchorOrigin="Origin.BottomCenter"
-                               Variant="Variant.Outlined">
-                        @foreach (var m in MonthOptions)
-                        {
-                            <MudSelectItem T="int?" Value="@m.Value">@m.Label</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudDatePicker Label="Start Date*"
+                                   @bind-Date="StartDate"
+                                   Required="true"
+                                   Variant="Variant.Outlined" />
                 </MudItem>
 
                 <MudItem xs="6">
-                    <MudSelect T="int?"
-                               Label="Year*"
-                               @bind-Value="SelectedYear"
-                               Placeholder="Select year"
-                               Required="true"
-                               AnchorOrigin="Origin.BottomCenter"
-                               Variant="Variant.Outlined">
-                        @foreach (var y in YearOptions)
-                        {
-                            <MudSelectItem T="int?" Value="@y">@y</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudDatePicker Label="End Date*"
+                                   @bind-Date="EndDate"
+                                   Required="true"
+                                   Variant="Variant.Outlined" />
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -90,77 +64,43 @@
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter] public int? BudgetId { get; set; }
-    [Parameter] public int CategoryId { get; set; }
+    [Parameter] public string Name { get; set; } = "";
     [Parameter] public decimal Amount { get; set; } = 1000;
-    [Parameter] public int Month { get; set; }
-    [Parameter] public int Year { get; set; }
+    [Parameter] public DateTime? StartDate { get; set; }
+    [Parameter] public DateTime? EndDate { get; set; }
+    [Parameter] public int? CategoryId { get; set; }
     [Parameter] public bool IsEdit { get; set; }
 
-    // Nullable wrappers so selects show placeholder when nothing is chosen
-    private int? SelectedCategoryId;
-    private int? SelectedMonth;
-    private int? SelectedYear;
-
-    private List<Domain.Entities.TransactionCategory> Categories = new();
     private MudForm form = default!;
-    private string CategoryName = "";
-
-    // Pre-built option lists to avoid Razor for-loop closure bugs
-    private record MonthOption(int? Value, string Label);
-    private List<MonthOption> MonthOptions = new();
-    private List<int?> YearOptions = new();
+    private List<TransactionCategory> categories = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Build month options
-        for (int m = 1; m <= 12; m++)
+        categories = await CategoryService.GetAllTransactionCategoriesAsync();
+        
+        if (!IsEdit)
         {
-            int monthNumber = m; // local copy to avoid closure capture issue
-            MonthOptions.Add(new MonthOption(monthNumber,
-                System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(monthNumber)));
+            if (StartDate == null) StartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            if (EndDate == null) EndDate = StartDate.Value.AddMonths(1).AddDays(-1);
         }
-
-        // Build year options (previous year → current year + 3)
-        int baseYear = DateTime.Now.Year;
-        for (int y = baseYear - 1; y <= baseYear + 3; y++)
-        {
-            int yearNumber = y; // local copy
-            YearOptions.Add(yearNumber);
-        }
-
-        Categories = await CategoryService.GetAllTransactionCategoriesAsync();
-
-        if (IsEdit)
-        {
-            var category = Categories.FirstOrDefault(c => c.Id == CategoryId);
-            CategoryName = category?.Name ?? "Unknown";
-            SelectedCategoryId = CategoryId;
-        }
-
-        // Pre-select the values passed from the parent page (if they are valid)
-        SelectedMonth = Month > 0 ? Month : (int?)null;
-        SelectedYear = Year > 0 ? Year : (int?)null;
     }
 
     private void Cancel() => MudDialog.Cancel();
 
     private async Task Submit()
     {
-        if (!IsEdit && (SelectedCategoryId == null || SelectedCategoryId <= 0))
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        if (string.IsNullOrWhiteSpace(Name))
         {
-            Snackbar.Add("Please select a category.", Severity.Warning);
+            Snackbar.Add("Please enter a budget name.", Severity.Warning);
             return;
         }
 
-        if (SelectedMonth == null)
+        if (StartDate == null || EndDate == null)
         {
-            Snackbar.Add("Please select a month.", Severity.Warning);
-            return;
-        }
-
-        if (SelectedYear == null)
-        {
-            Snackbar.Add("Please select a year.", Severity.Warning);
+            Snackbar.Add("Please select start and end dates.", Severity.Warning);
             return;
         }
 
@@ -171,9 +111,11 @@
                 await BudgetService.UpdateBudgetAsync(BudgetId.Value, new BudgetUpdateDTO
                 {
                     Id = BudgetId.Value,
+                    Name = Name,
                     Amount = Amount,
-                    Month = SelectedMonth.Value,
-                    Year = SelectedYear.Value
+                    StartDate = StartDate.Value,
+                    EndDate = EndDate.Value,
+                    CategoryId = CategoryId
                 });
                 Snackbar.Add("Budget updated successfully.", Severity.Success);
             }
@@ -181,10 +123,11 @@
             {
                 await BudgetService.CreateBudgetAsync(new BudgetCreateDTO
                 {
-                    CategoryId = SelectedCategoryId!.Value,
+                    Name = Name,
                     Amount = Amount,
-                    Month = SelectedMonth.Value,
-                    Year = SelectedYear.Value
+                    StartDate = StartDate.Value,
+                    EndDate = EndDate.Value,
+                    CategoryId = CategoryId
                 });
                 Snackbar.Add("Budget created successfully.", Severity.Success);
             }

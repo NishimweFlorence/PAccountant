@@ -19,6 +19,10 @@ namespace Infrastructure.Data
         public DbSet<Asset> Assets { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Budget> Budgets { get; set; }
+        public DbSet<TransactionEntry> TransactionEntries { get; set; }
+        public DbSet<Income> Incomes { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
+        public DbSet<CustomLookup> CustomLookups { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,22 +31,32 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Account>(entity =>
             {
                 entity.OwnsOne(a => a.Currency);
-                entity.HasMany(a => a.Transactions)
-                      .WithOne(t => t.Account)
-                      .HasForeignKey(t => t.AccountId);
+                entity.OwnsOne(a => a.Type, t =>
+                {
+                    t.Property(x => x.Name).HasColumnName("Type");
+                });
+                entity.HasMany(a => a.TransactionEntries)
+                      .WithOne(e => e.Account)
+                      .HasForeignKey(e => e.AccountId);
             });
 
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.OwnsOne(t => t.Currency);
-                entity.HasOne(t => t.Category)
-                      .WithMany(c => c.Transactions)
-                      .HasForeignKey(t => t.IdTransactionCategory);
+                entity.HasMany(t => t.Entries)
+                      .WithOne(e => e.Transaction)
+                      .HasForeignKey(e => e.TransactionId);
+
+                entity.HasOne(t => t.Budget)
+                      .WithMany(b => b.Transactions)
+                      .HasForeignKey(t => t.BudgetId);
             });
 
             modelBuilder.Entity<Asset>(entity =>
             {
                 entity.OwnsOne(a => a.Currency);
+                entity.OwnsOne(a => a.Type);
+                entity.OwnsOne(a => a.ValueChange);
             });
 
             modelBuilder.Entity<Liability>(entity =>
@@ -57,14 +71,41 @@ namespace Infrastructure.Data
 
             modelBuilder.Entity<Budget>(entity =>
             {
-                entity.HasOne(b => b.Category)
-                      .WithMany(c => c.Budgets)
-                      .HasForeignKey(b => b.CategoryId);
+                // Decoupled from Category
             });
 
             modelBuilder.Entity<TransactionCategory>(entity =>
             {
                 entity.OwnsOne(c => c.Type);
+                entity.HasMany(c => c.TransactionEntries)
+                      .WithOne(e => e.Category)
+                      .HasForeignKey(e => e.CategoryId);
+            });
+
+            modelBuilder.Entity<Income>(entity =>
+            {
+                entity.OwnsOne(i => i.Type);
+                entity.OwnsOne(i => i.Currency);
+                entity.HasOne(i => i.Transaction)
+                      .WithMany()
+                      .HasForeignKey(i => i.TransactionId);
+            });
+
+            modelBuilder.Entity<Expense>(entity =>
+            {
+                entity.OwnsOne(e => e.Type);
+                entity.OwnsOne(e => e.Currency);
+                entity.HasOne(e => e.Transaction)
+                      .WithMany()
+                      .HasForeignKey(e => e.TransactionId);
+            });
+
+            modelBuilder.Entity<CustomLookup>(entity =>
+            {
+                entity.HasOne(c => c.User)
+                      .WithMany()
+                      .HasForeignKey(c => c.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

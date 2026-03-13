@@ -35,7 +35,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Name">@context.Name</MudTd>
-                <MudTd DataLabel="Category">@context.Category</MudTd>
+                <MudTd DataLabel="Type">@context.Type?.Name</MudTd>
                 <MudTd DataLabel="Purchase Value">@context.PurchaseValue.ToString("N2")</MudTd>
                 <MudTd DataLabel="Current Value">@context.CurrentValue.ToString("N2")</MudTd>
                 <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
@@ -66,7 +66,7 @@
             return true;
         if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
-        if (element.Category.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.Type?.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
             return true;
         if (element.Currency?.Code.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
             return true;
@@ -118,7 +118,7 @@
         {
             { x => x.Model, new AssetCreateDTO { 
                 Name = asset.Name,
-                Category = asset.Category,
+                Type = asset.Type?.Name ?? "Other",
                 Currency = asset.Currency?.Code ?? "RWF",
                 PurchaseValue = asset.PurchaseValue,
                 CurrentValue = asset.CurrentValue,

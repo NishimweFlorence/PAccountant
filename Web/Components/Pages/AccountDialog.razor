@@ -1,10 +1,12 @@
 @using  Application.DTO
+@using Application.DTO
 @using System.ComponentModel.DataAnnotations
 @using Domain.Entities
 @using Application.Interfaces
 @using MudBlazor
 
 @inject IAccountService AccountService
+@inject ILookupService LookupService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -22,7 +24,15 @@
                     <MudTextField Label="Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Variant="Variant.Outlined" />
+                    <MudTextField Label="Account Number" @bind-Value="Model.AccountNumber" For="@(() => Model.AccountNumber)" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Type" @bind-Value="Model.Type" For="@(() => Model.Type)" Variant="Variant.Outlined" Required="true">
+                        @foreach (var type in AccountTypes)
+                        {
+                            <MudSelectItem Value="@type">@type</MudSelectItem>
+                        }
+                    </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudNumericField Label="Balance" @bind-Value="Model.Balance" For="@(() => Model.Balance)" Variant="Variant.Outlined" Format="N2" />
@@ -53,11 +63,29 @@
 @code{
     [CascadingParameter] IMudDialogInstance DialogInstance { get; set; } = default!;
 
+    [CascadingParameter] private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> AuthStateTask { get; set; } = default!;
+    
     [Parameter] public AccountCreateDTO Model { get; set; } = new() { Currency = "RWF" };
     [Parameter] public bool IsEdit { get; set; }
     [Parameter] public int AccountId { get; set; }
 
     private List<string> Currencies = new() { "RWF", "USD", "EUR" };
+    private List<string> AccountTypes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var defaults = Domain.ValueObjects.AccountType.GetAll().Select(x => x.Name).ToList();
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            if (int.TryParse(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                AccountTypes = await LookupService.GetTypesAsync(userId, "AccountType", defaults);
+                return;
+            }
+        }
+        AccountTypes = defaults;
+    }
 
     private async Task SubmitForm()
     {
@@ -68,6 +96,7 @@
                 var updateDto = new AccountUpdateDTO
                 {
                     Name = Model.Name,
+                    AccountNumber = Model.AccountNumber,
                     Type = Model.Type,
                     Balance = Model.Balance,
                     Status = Model.Status

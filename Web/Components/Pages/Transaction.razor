@@ -19,8 +19,7 @@
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
     <MudPaper Elevation="2" Class="pa-4">
         <div class="d-flex align-center justify-space-between mb-4">
-            <MudText Typo="Typo.h5" Color="Color.Primary">Transactions</MudText>
-            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenCreateDialog">Add Transaction</MudButton>
+            <MudText Typo="Typo.h5" Color="Color.Primary">Transactions History</MudText>
         </div>
 
         <MudGrid Class="mb-4">
@@ -62,28 +61,20 @@
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>ID</MudTh>
-                <MudTh>Category</MudTh>
-                <MudTh>Account</MudTh>
+                <MudTh>Description</MudTh>
                 <MudTh>Amount</MudTh>
                 <MudTh>Currency</MudTh>
                 <MudTh>Date</MudTh>
-                <MudTh Style="width: 120px;">Actions</MudTh>
+                <MudTh Style="width: 80px;">Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="ID">#@context.Id</MudTd>
-                <MudTd DataLabel="Category">
-                    <MudChip T="string" Size="Size.Small" Color="GetCategoryColor(context.IdTransactionCategory)">
-                        @(context.Category?.Name ?? "N/A")
-                    </MudChip>
-                </MudTd>
-                <MudTd DataLabel="Account">@(context.Account?.Name ?? context.AccountId.ToString())</MudTd>
-                <MudTd DataLabel="Amount"><MudText Color="Color.Primary">@context.Amount.ToString("N2")</MudText></MudTd>
+                <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "-" : context.Description)</MudTd>
+                <MudTd DataLabel="Amount"><MudText Color="Color.Primary">@context.Entries.Sum(e => e.Debit).ToString("N2")</MudText></MudTd>
                 <MudTd DataLabel="Currency">@context.Currency?.Code</MudTd>
                 <MudTd DataLabel="Date">@context.TransactionDate.ToString("dd MMM yyyy")</MudTd>
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" OnClick="@(() => NavigationManager.NavigateTo($"/transactions/{context.Id}"))" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => OpenDeleteConfirmation(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small" OnClick="@(() => NavigationManager.NavigateTo($"/transactions/{context.Id}"))" />
                 </MudTd>
             </RowTemplate>
             <PagerContent><MudTablePager /></PagerContent>
@@ -100,14 +91,15 @@
     private string FilterCurrency = string.Empty;
     private List<string> Currencies = new() { "RWF", "USD", "EUR" };
 
-    private decimal TotalAmount => TransactionList.Sum(t => t.Amount);
+    private decimal TotalAmount => TransactionList.Sum(t => t.Entries.Sum(e => e.Debit));
     private int ThisMonthCount => TransactionList.Count(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year);
-    private decimal ThisMonthAmount => TransactionList.Where(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year).Sum(t => t.Amount);
+    private decimal ThisMonthAmount => TransactionList.Where(t => t.TransactionDate.Month == DateTime.Today.Month && t.TransactionDate.Year == DateTime.Today.Year).Sum(t => t.Entries.Sum(e => e.Debit));
 
     private IEnumerable<TransactionEntity> FilteredTransactions => TransactionList.Where(t => 
         (string.IsNullOrWhiteSpace(SearchTerm) || 
-         (t.Account?.Name?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) || 
-         (t.Category?.Name?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)) && 
+         (t.Description?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) || 
+         t.Entries.Any(e => e.Account?.Name?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) || 
+         t.Entries.Any(e => e.Category?.Name?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)) && 
         (string.IsNullOrWhiteSpace(FilterCurrency) || t.Currency?.Code == FilterCurrency));
 
     protected override async Task OnInitializedAsync() { await LoadData(); }
@@ -121,7 +113,7 @@
             Accounts = await AccountService.GetAllAccountsAsync();
             TransactionCategories = await TransactionCategoryService.GetAllTransactionCategoriesAsync();
         }
-        catch (Exception ex) { Snackbar.Add("Error loading data", Severity.Error); }
+        catch (Exception ex) { Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error); }
         finally { IsLoading = false; }
     }
 
@@ -153,19 +145,26 @@
             { x => x.Currencies, Currencies } 
         };
         var dialog = await DialogService.ShowAsync<TransactionDialog>("New Transaction", parameters);
-        if (!(await dialog.Result).Canceled) await LoadData();
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadData();
     }
 
     private async Task OpenEditDialog(TransactionEntity t)
     {
         var parameters = new DialogParameters<TransactionDialog> { 
             { x => x.Model, new CreateTransactionDTO { 
-                IdTransactionCategory = t.IdTransactionCategory, 
-                AccountId = t.AccountId, 
-                Amount = t.Amount, 
+                Description = t.Description,
+                ReferenceNumber = t.ReferenceNumber,
+                BudgetId = t.BudgetId,
                 Currency = t.Currency?.Code ?? "RWF", 
                 TransactionDate = t.TransactionDate, 
-                CreatedAt = t.CreatedAt 
+                CreatedAt = t.CreatedAt,
+                Entries = t.Entries.Select(e => new TransactionEntryDTO {
+                    AccountId = e.AccountId,
+                    CategoryId = e.CategoryId,
+                    Debit = e.Debit,
+                    Credit = e.Credit
+                }).ToList()
             } }, 
             { x => x.IsEdit, true }, 
             { x => x.TransactionId, t.Id }, 
@@ -174,7 +173,8 @@
             { x => x.Currencies, Currencies } 
         };
         var dialog = await DialogService.ShowAsync<TransactionDialog>("Edit Transaction", parameters);
-        if (!(await dialog.Result).Canceled) await LoadData();
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadData();
     }
 
     private async Task OpenDeleteConfirmation(TransactionEntity t)

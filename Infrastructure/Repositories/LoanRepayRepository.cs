@@ -3,6 +3,7 @@ using Domain.Entities;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Application.DTO;
+using Domain.ValueObjects;
 
 namespace Infrastructure.Repositories
 {
@@ -28,6 +29,47 @@ namespace Infrastructure.Repositories
             };
 
             _context.LoanRepayments.Add(loanRepayment);
+
+            var loan = await _context.Loans.FindAsync(loanRepaymentDto.LoanId);
+            if (loan != null)
+            {
+                loan.AmountToPay = Math.Max(0, loan.AmountToPay - loanRepaymentDto.Amount);
+                if (loan.AmountToPay <= 0) 
+                {
+                    loan.Status = "Paid";
+                }
+                _context.Loans.Update(loan);
+
+                var loanAssetCat = await _context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Loan Asset");
+                if (loanAssetCat == null)
+                {
+                    loanAssetCat = new TransactionCategory { Name = "Loan Asset", Type = TransactionType.FromString("Asset") };
+                    _context.TransactionCategories.Add(loanAssetCat);
+                    await _context.SaveChangesAsync();
+                }
+
+                var transaction = new Transaction
+                {
+                    TransactionDate = loanRepaymentDto.RepaymentDate ?? DateTime.Now,
+                    Description = $"Loan Repayment from {loan.Borrower}",
+                    Currency = Currency.FromCode(loan.Currency.Code),
+                    CreatedAt = DateTime.Now,
+                    Entries = new List<TransactionEntry>
+                    {
+                        new TransactionEntry { AccountId = loanRepaymentDto.AccountId, Debit = loanRepaymentDto.Amount, Credit = 0 }, // Increase bank balance
+                        new TransactionEntry { CategoryId = loanAssetCat.Id, Debit = 0, Credit = loanRepaymentDto.Amount } // Decrease loan asset
+                    }
+                };
+                _context.Transactions.Add(transaction);
+
+                var account = await _context.Accounts.FindAsync(loanRepaymentDto.AccountId);
+                if (account != null)
+                {
+                    account.Balance = (account.Balance ?? 0) + loanRepaymentDto.Amount;
+                    _context.Accounts.Update(account);
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             loanRepaymentDto.Id = loanRepayment.Id;

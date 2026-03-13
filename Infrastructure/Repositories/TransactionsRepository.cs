@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Application.DTO;
 using Microsoft.EntityFrameworkCore;
 using Domain.ValueObjects;
+using System.Linq;
 
 namespace Infrastructure.Repositories
 {
@@ -19,16 +20,22 @@ namespace Infrastructure.Repositories
         public async Task<Transaction?> GetTransactionByIdAsync(int Id)
         {
             return await _context.Transactions
-                .Include(t => t.Category)
-                .Include(t => t.Account)
+                .Include(t => t.Entries)
+                    .ThenInclude(e => e.Account)
+                .Include(t => t.Entries)
+                    .ThenInclude(e => e.Category)
+                .Include(t => t.Budget)
                 .FirstOrDefaultAsync(t => t.Id == Id);
         }
 
         public async Task<List<Transaction>> GetAllTransactionsAsync()
         {
             return await _context.Transactions
-                .Include(t => t.Category)
-                .Include(t => t.Account)
+                .Include(t => t.Entries)
+                    .ThenInclude(e => e.Account)
+                .Include(t => t.Entries)
+                    .ThenInclude(e => e.Category)
+                .Include(t => t.Budget)
                 .ToListAsync();
         }
 
@@ -36,12 +43,19 @@ namespace Infrastructure.Repositories
         {
             var transaction = new Transaction
             {
-                IdTransactionCategory = TransactionDTO.IdTransactionCategory,
                 TransactionDate       = TransactionDTO.TransactionDate,
-                Amount                = TransactionDTO.Amount,
+                Description           = TransactionDTO.Description,
+                ReferenceNumber       = TransactionDTO.ReferenceNumber,
+                BudgetId              = TransactionDTO.BudgetId,
                 Currency              = Currency.FromCode(TransactionDTO.Currency),
-                AccountId             = TransactionDTO.AccountId,
                 CreatedAt             = TransactionDTO.CreatedAt,
+                Entries               = TransactionDTO.Entries.Select(e => new TransactionEntry
+                {
+                    AccountId = e.AccountId,
+                    CategoryId = e.CategoryId,
+                    Debit = e.Debit,
+                    Credit = e.Credit
+                }).ToList()
             };
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
@@ -49,14 +63,28 @@ namespace Infrastructure.Repositories
 
         public async Task UpdateTransactionAsync(int Id, UpdateTransactionDTO TransactionDTO)
         {
-            var transaction = await _context.Transactions.FindAsync(Id);
+            var transaction = await _context.Transactions
+                .Include(t => t.Entries)
+                .FirstOrDefaultAsync(t => t.Id == Id);
+
             if (transaction != null)
             {
-                transaction.IdTransactionCategory = TransactionDTO.IdTransactionCategory;
                 transaction.TransactionDate        = TransactionDTO.TransactionDate;
-                transaction.Amount                 = TransactionDTO.Amount;
+                transaction.Description            = TransactionDTO.Description;
+                transaction.ReferenceNumber        = TransactionDTO.ReferenceNumber;
+                transaction.BudgetId               = TransactionDTO.BudgetId;
                 transaction.Currency               = Currency.FromCode(TransactionDTO.Currency);
-                transaction.AccountId              = TransactionDTO.AccountId;
+
+                _context.TransactionEntries.RemoveRange(transaction.Entries);
+                transaction.Entries = TransactionDTO.Entries.Select(e => new TransactionEntry
+                {
+                    AccountId = e.AccountId,
+                    CategoryId = e.CategoryId,
+                    Debit = e.Debit,
+                    Credit = e.Credit,
+                    TransactionId = Id
+                }).ToList();
+
                 await _context.SaveChangesAsync();
             }
         }

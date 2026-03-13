@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Application.DTO;
 using Application.Interfaces;
 using Domain.Entities;
@@ -11,16 +12,13 @@ namespace Application.Services.Budgets
     {
         private readonly IBudget _budgetRepo;
         private readonly ITransactionService _transactionService;
-        private readonly ITransactionCategoryService _categoryService;
 
         public BudgetService(
             IBudget budgetRepo, 
-            ITransactionService transactionService,
-            ITransactionCategoryService categoryService)
+            ITransactionService transactionService)
         {
             _budgetRepo = budgetRepo;
             _transactionService = transactionService;
-            _categoryService = categoryService;
         }
 
         public async Task<List<Budget>> GetAllBudgetsAsync()
@@ -48,34 +46,60 @@ namespace Application.Services.Budgets
             await _budgetRepo.DeleteBudgetAsync(id);
         }
 
-        public async Task<List<BudgetDisplayDTO>> GetBudgetsWithUsageAsync(int month, int year)
+        public async Task<List<BudgetDisplayDTO>> GetBudgetsWithUsageAsync(DateTime targetDate)
         {
             var budgets = await _budgetRepo.GetAllBudgetsAsync();
-            var categories = await _categoryService.GetAllTransactionCategoriesAsync(); // This line was in the user's snippet, but not used directly. Keeping it as per instruction.
             var allTransactions = await _transactionService.GetAllTransactionsAsync();
             
-            var transactions = allTransactions
-                .Where(t => t.TransactionDate.Month == month && t.TransactionDate.Year == year)
-                .ToList();
-
             var result = new List<BudgetDisplayDTO>();
 
-            foreach (var budget in budgets.Where(b => b.Month == month && b.Year == year))
+            // Filter budgets active for the target month/year
+            var startOfMonth = new DateTime(targetDate.Year, targetDate.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            var activeBudgets = budgets.Where(b => 
+                (b.StartDate >= startOfMonth && b.StartDate <= endOfMonth) ||
+                (b.EndDate >= startOfMonth && b.EndDate <= endOfMonth) ||
+                (b.StartDate <= startOfMonth && b.EndDate >= endOfMonth));
+
+            foreach (var budget in activeBudgets)
             {
-                var category = await _categoryService.GetTransactionCategoryByIdAsync(budget.CategoryId);
-                var spent = transactions
-                    .Where(t => t.IdTransactionCategory == budget.CategoryId)
-                    .Sum(t => t.Amount);
+                decimal spent = 0;
+                
+                if (budget.TransactionCategoryId.HasValue)
+                {
+                    // Calculate spent based on category and date range
+                    var categoryTransactions = allTransactions.Where(t => 
+                        t.TransactionDate >= budget.StartDate && 
+                        t.TransactionDate <= budget.EndDate);
+
+                    foreach (var t in categoryTransactions)
+                    {
+                        spent += t.Entries
+                            .Where(e => e.CategoryId == budget.TransactionCategoryId.Value)
+                            .Sum(e => e.Debit);
+                    }
+                }
+                else
+                {
+                    // Fallback to explicit budget link
+                    var budgetTransactions = allTransactions.Where(t => t.BudgetId == budget.Id);
+                    foreach (var t in budgetTransactions)
+                    {
+                        spent += t.Entries.Where(e => e.CategoryId.HasValue).Sum(e => e.Debit);
+                    }
+                }
 
                 result.Add(new BudgetDisplayDTO
                 {
                     Id = budget.Id,
-                    CategoryId = budget.CategoryId,
-                    CategoryName = category?.Name ?? "Unknown",
+                    Name = budget.Name,
                     Amount = budget.Amount,
                     SpentAmount = spent,
-                    Month = budget.Month,
-                    Year = budget.Year
+                    StartDate = budget.StartDate,
+                    EndDate = budget.EndDate,
+                    CategoryId = budget.TransactionCategoryId,
+                    CategoryName = budget.TransactionCategory?.Name
                 });
             }
 

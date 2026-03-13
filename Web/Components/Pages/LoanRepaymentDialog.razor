@@ -12,27 +12,27 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form" @bind-IsValid="@success">
-            <MudSelect T="int" Label="Select Loan" @bind-Value="Model.LoanId" Required="true" RequiredError="Loan is required!">
+            <MudSelect T="int" Label="Select Loan" @bind-Value="Model.LoanId" Required="true" RequiredError="Loan is required!" Placeholder="Select Loan">
                 @if (Loans != null)
                 {
                     @foreach (var loan in Loans)
                     {
-                        <MudSelectItem Value="@loan.Id">@loan.Borrower - @loan.Amount (@loan.Currency)</MudSelectItem>
+                        <MudSelectItem Value="@loan.Id">@loan.Borrower - Total to Pay: @loan.AmountToPay.ToString("N2") (@loan.Currency)</MudSelectItem>
                     }
                 }
             </MudSelect>
-            <MudSelect T="int" Label="Destination Account" @bind-Value="Model.AccountId" Required="true" RequiredError="Account is required!">
+            <MudSelect T="int" Label="Destination Account" @bind-Value="Model.AccountId" Required="true" RequiredError="Account is required!" Placeholder="Destination Account">
                 @if (Accounts != null)
                 {
                     @foreach (var account in Accounts)
                     {
-                        <MudSelectItem Value="@account.Id">@account.Name (@account.Balance @account.Currency?.Code)</MudSelectItem>
+                        <MudSelectItem Value="@account.Id">@account.Name (@account.AccountNumber) - Balance: @account.Balance @account.Currency?.Symbol</MudSelectItem>
                     }
                 }
             </MudSelect>
-            <MudNumericField T="decimal" Label="Amount" @bind-Value="Model.Amount" Required="true" RequiredError="Amount is required!" Min="0.01m" />
-            <MudDatePicker Label="Repayment Date" @bind-Date="Model.RepaymentDate" Required="true" RequiredError="Date is required!" />
-            <MudTextField T="string" Label="Note" @bind-Value="Model.Note" Lines="3" />
+            <MudNumericField T="decimal" Label="Amount" @bind-Value="Model.Amount" Required="true" RequiredError="Amount is required!" Min="0.01m" Placeholder="Amount" />
+            <MudDatePicker Label="Repayment Date" @bind-Date="Model.RepaymentDate" Required="true" RequiredError="Date is required!" Placeholder="Repayment Date" />
+            <MudTextField T="string" Label="Note" @bind-Value="Model.Note" Lines="3" Placeholder="Note" />
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -42,14 +42,14 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter] public LoanRepaymentUpdateDTO Model { get; set; } = new();
     [Parameter] public bool IsEdit { get; set; }
 
     private string ButtonText => IsEdit ? "Update" : "Add";
     private bool success;
-    private MudForm form;
+    private MudForm form = new();
     private List<LoanCreateDTO> Loans = new();
     private List<Account> Accounts = new();
 
@@ -63,7 +63,7 @@
         }
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
 
     private async Task Submit()
     {
@@ -90,7 +90,7 @@
                     await LoanRepaymentService.CreateLoanRepaymentAsync(createDto);
                     Snackbar.Add("Repayment added successfully", Severity.Success);
                 }
-                MudDialog.Close(DialogResult.Ok(true));
+                MudDialog?.Close(DialogResult.Ok(true));
             }
             catch (Exception ex)
             {

@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Web.Services
+namespace PAccountant.Services
 {
     public class TransactionPdfService : ITransactionPdfService
     {

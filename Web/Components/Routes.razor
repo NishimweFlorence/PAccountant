@@ -1,4 +1,4 @@
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -12,10 +12,37 @@
             <Authorizing>
                 <div class="d-flex align-center justify-center w-100 h-100 mt-16">
                     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                    <MudText Typo="Typo.h6" Class="ml-4">Checking authentication...</MudText>
+                    <MudText Typo="Typo.h6" Class="ml-4" Style="color: var(--p-dim-500);">Checking authentication...</MudText>
                 </div>
             </Authorizing>
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    private MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#2e2c2d",         /* Dim Grey 200 */
+            Secondary = "#9a8f97",       /* Rosy Granite 500 */
+            Tertiary = "#e9e3e6",        /* Alabaster Grey 500 */
+            AppbarBackground = "#2e2c2d", /* Dim Grey 200 */
+            AppbarText = "#fbf9fa",      /* Alabaster Grey 900 */
+            Background = "#fbf9fa",      /* Alabaster Grey 900 */
+            DrawerBackground = "#ede8eb", /* Alabaster Grey 600 */
+            DrawerText = "#171617",      /* Dim Grey 100 */
+            Surface = "#ffffff",
+            TextPrimary = "#171617",     /* Dim Grey 100 */
+            TextSecondary = "#5c585b",   /* Dim Grey 400 */
+            ActionDefault = "#2e2c2d",
+            ActionDisabled = "#c7c5c6",
+            ActionDisabledBackground = "#e3e2e3"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "8px"
+        }
+    };
+}

@@ -50,7 +50,7 @@
                 </MudItem>
 
                 <MudItem xs="12" md="8">
-                    <MudForm @ref="form" @bind-IsValid="@success">
+                    <MudForm @ref="form" @bind-IsValid="@success" formname="ProfileForm">
                         <MudGrid>
                             <MudItem xs="12" sm="6">
                                 <MudTextField T="string" Label="First Name" @bind-Value="userDto.FirstName" Required="true" Variant="Variant.Outlined" />

@@ -1,7 +1,7 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj": {}
+    "C:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj": {}
   },
   "projects": {
     "C:\\Users\\Achil\\source\\repos\\PAccountant\\Core\\Application\\Application.csproj": {
@@ -692,14 +692,14 @@
         }
       }
     },
-    "c:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj": {
+    "C:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj",
         "projectName": "Infrastructure",
-        "projectPath": "c:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj",
+        "projectPath": "C:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\Infrastructure.csproj",
         "packagesPath": "C:\\Users\\Achil\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\obj\\",
+        "outputPath": "C:\\Users\\Achil\\source\\repos\\PAccountant\\Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",

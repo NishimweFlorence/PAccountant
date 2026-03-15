@@ -7,7 +7,7 @@
 
 <MudDialog>
     <DialogContent>
-        <MudForm @ref="form">
+        <MudForm @ref="form" formname="BudgetForm">
             <MudGrid>
                 <MudItem xs="12">
                     <MudSelect T="int?" Label="Expense Category (Optional)" @bind-Value="CategoryId" Variant="Variant.Outlined" Clearable="true">

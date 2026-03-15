@@ -4,44 +4,19 @@
     <MudGrid Spacing="0" Style="height: 100vh;">
         @* Left Hero Section *@
         <MudItem xs="12" md="5" Class="auth-hero-panel d-none d-md-flex">
-
-            @* Brand *@
             <div class="auth-hero-header">
                 <div class="auth-brand">
                     <div class="auth-brand-icon">
-                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Style="color:#fbf9fa;" Size="Size.Medium" />
+                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Style="color: #ffffff;" Size="Size.Medium" />
                     </div>
-                    <MudText Typo="Typo.h6" Style="color:#fbf9fa; font-weight:700; letter-spacing:0.02em;">PAccountant</MudText>
+                    <MudText Typo="Typo.h6" Style="color: #ffffff; font-weight: 700; letter-spacing: 0.02em;">PAccountant</MudText>
                 </div>
-                <MudText Typo="Typo.body2" Class="auth-hero-subtitle">Your personal finance companion &mdash; smart, simple, secure.</MudText>
+                <MudText Typo="Typo.body2" Class="auth-hero-subtitle">Your account in your hands</MudText>
             </div>
 
-            @* Hero centre *@
             <div class="auth-hero-wrapper">
-                <div class="auth-hero-badge">
-                    <MudIcon Icon="@Icons.Material.Outlined.VerifiedUser" Style="color:#d6d2d5;" Size="Size.Small" />
-                    Trusted by thousands of users
-                </div>
-                <MudText Typo="Typo.h1" Class="auth-hero-title">Manage<br/>your money</MudText>
-                <MudImage Src="/images/auth-hero.png" Alt="Finance App Mockup" Class="auth-hero-image" />
-
-                @* Stats *@
-                <div class="auth-hero-stats">
-                    <div class="auth-stat-pill">
-                        <span class="stat-value">99%</span>
-                        <span class="stat-label">Uptime</span>
-                    </div>
-                    <div class="auth-stat-pill">
-                        <span class="stat-value">10k+</span>
-                        <span class="stat-label">Users</span>
-                    </div>
-                    <div class="auth-stat-pill">
-                        <span class="stat-value">Bank-grade</span>
-                        <span class="stat-label">Security</span>
-                    </div>
-                </div>
+                <MudText Typo="Typo.h1" Class="auth-hero-title">Simple.<br/>Secure.<br/>Adaptive.</MudText>
             </div>
-
         </MudItem>
 
         @* Right Form Section *@
@@ -51,12 +26,6 @@
             </div>
             <div class="auth-footer">
                 <MudText Typo="Typo.caption">&copy; 2025 PAccountant. All rights reserved.</MudText>
-                <div class="auth-footer-links">
-                    <MudLink Href="#" Color="Color.Default" Underline="Underline.None">Contact Us</MudLink>
-                    <MudSelect T="string" Value="@("English")" Dense="true" DisableUnderLine="true" Style="width: 80px; margin-left: 16px;">
-                        <MudSelectItem Value="@("English")">English</MudSelectItem>
-                    </MudSelect>
-                </div>
             </div>
         </MudItem>
     </MudGrid>

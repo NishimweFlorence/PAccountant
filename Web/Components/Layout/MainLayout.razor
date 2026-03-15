@@ -17,7 +17,7 @@
 
         <AuthorizeView Context="authContext">
             <NotAuthorized>
-                <MudLink Href="/login" Color="Color.Inherit" Class="ml-4">Login</MudLink>
+                <MudLink Href="/" Color="Color.Inherit" Class="ml-4">Login</MudLink>
             </NotAuthorized>
             <Authorized>
                 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-2" ActivationEvent="MouseEvent.LeftClick">
@@ -96,48 +96,6 @@
         await customAuthStateProvider.UpdateAuthenticationState(null);
         NavigationManager.NavigateTo("/");
     }
-
-    private MudTheme _theme = new()
-    {
-        PaletteLight = new PaletteLight()
-        {
-            Primary = "#415a77", /* dusk_blue */
-            Secondary = "#778da9", /* dusty_denim */
-            Tertiary = "#1b263b", /* prussian_blue */
-            AppbarBackground = "#1b263b", /* prussian_blue */
-            AppbarText = "#e0e1dd", /* alabaster_grey */
-            Background = "#f9f9f8", /* alabaster_grey 900 */
-            DrawerBackground = "#e0e1dd", /* alabaster_grey */
-            DrawerText = "#0d1b2a", /* ink_black */
-            TextPrimary = "#0d1b2a", /* ink_black */
-            TextSecondary = "#415a77", /* dusk_blue */
-            Surface = "#ffffff",
-            ActionDefault = "#0d1b2a",
-            ActionDisabled = "#b4b6ad",
-            ActionDisabledBackground = "#ececea"
-        },
-        PaletteDark = new PaletteDark()
-        {
-            Primary = "#778da9", /* dusty_denim */
-            Secondary = "#415a77", /* dusk_blue */
-            Tertiary = "#a1b8d6", 
-            Background = "#0d1b2a", /* ink_black */
-            Surface = "#1b263b", /* prussian_blue */
-            DrawerBackground = "#1b263b", /* prussian_blue */
-            DrawerText = "#e0e1dd", /* alabaster_grey */
-            AppbarBackground = "#08111a", /* ink_black 300 */
-            AppbarText = "#e0e1dd", /* alabaster_grey */
-            TextPrimary = "#e0e1dd", /* alabaster_grey */
-            TextSecondary = "#778da9", /* dusty_denim */
-            ActionDefault = "#e0e1dd",
-            ActionDisabled = "#5b5e53",
-            ActionDisabledBackground = "#2e2f2a"
-        },
-        LayoutProperties = new LayoutProperties()
-        {
-            DefaultBorderRadius = "8px"
-        }
-    };
 
     private void DrawerToggle()
     {

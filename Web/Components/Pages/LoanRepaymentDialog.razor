@@ -11,7 +11,7 @@
 
 <MudDialog>
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="@success">
+        <MudForm @ref="form" @bind-IsValid="@success" formname="LoanRepaymentForm">
             <MudSelect T="int" Label="Select Loan" @bind-Value="Model.LoanId" Required="true" RequiredError="Loan is required!" Placeholder="Select Loan">
                 @if (Loans != null)
                 {

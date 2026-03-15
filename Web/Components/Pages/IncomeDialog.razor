@@ -17,7 +17,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="form" @bind-IsValid="@success">
+        <MudForm @ref="form" @bind-IsValid="@success" formname="IncomeForm">
             <MudGrid>
                 <MudItem xs="12">
                     <MudNumericField Label="Amount" @bind-Value="Model.Amount" For="@(() => Model.Amount)" 
